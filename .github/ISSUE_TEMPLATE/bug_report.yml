@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible problem in Skill DNA Compiler
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include API keys, note contents, outbound JSON, databases, credentials, or personal paths.
+        Security vulnerabilities must use private vulnerability reporting instead of this public form.
+  - type: input
+    id: version
+    attributes:
+      label: Skill DNA Compiler version
+      placeholder: v0.1.0-beta.2
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2 x64
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use only synthetic example data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: safe_error
+    attributes:
+      label: Sanitized error message
+      description: Remove secrets, note text, usernames, and private paths before pasting.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed API keys, private notes, credentials, personal data, and private paths.
+          required: true
+        - label: This is not a security vulnerability report.
+          required: true

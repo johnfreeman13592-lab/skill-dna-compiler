@@ -1,0 +1,36 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Local application data and generated output
+data/
+generated-skills/
+security-staging/
+*.db
+*.db-shm
+*.db-wal
+*.db.backups/
+*.sqlite.backups/
+*.sqlite3.backups/
+
+# Build artifacts
+build/
+dist/
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

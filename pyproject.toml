@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skill-dna-compiler"
+version = "0.1.0b2"
+description = "Compile reusable, source-backed AI skills from selected Obsidian notes."
+readme = "README.md"
+license = "MPL-2.0"
+requires-python = ">=3.11"
+dependencies = [
+  "keyring>=25,<27",
+  "openai>=2,<3",
+  "platformdirs>=4,<5",
+  "pydantic>=2.10,<3",
+  "pydantic-settings>=2.7,<3",
+  "python-frontmatter>=1.1,<2",
+  "PyYAML>=6,<7",
+  "SQLAlchemy>=2,<3",
+  "streamlit>=1.40,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<10",
+  "pytest-cov>=6,<8",
+  "ruff>=0.9,<1",
+]
+package = [
+  "pyinstaller>=6.21,<7",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
