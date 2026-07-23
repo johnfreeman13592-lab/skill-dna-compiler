@@ -1,91 +1,151 @@
-# Skill DNA Compiler
+<h1 align="center">🧬 Skill DNA Compiler</h1>
 
-Skill DNA Compilerは、ユーザーが選択したObsidianのMarkdownメモから、別のプロジェクトでも再利用できる手順やルールを抽出し、人間の承認を経てCodex用`SKILL.md`へ変換するローカルアプリです。
+<p align="center"><strong>Turn your notes into source-backed Skills your AI can actually reuse.</strong></p>
 
-## Windows版を試す
+<p align="center">
+  A local-first Windows app that transforms selected Obsidian and Markdown notes into
+  human-approved Codex Skills.
+</p>
 
-**[Skill DNA Compiler v0.1.0-beta.2 Windows版を直接ダウンロード（ZIP）](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.2/skill-dna-compiler-0.1.0-beta.2-windows-x64.zip)**
+<p align="center">
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.2"><img alt="Release" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
+  <img alt="Local first" src="https://img.shields.io/badge/data-local--first-059669">
+  <img alt="Telemetry" src="https://img.shields.io/badge/telemetry-none-475569">
+</p>
 
-1. ダウンロードしたZIPを右クリックし、**「すべて展開」**を選ぶ。
-2. 展開後のフォルダを開く。ZIPの中から直接起動せず、フォルダ全体を展開した状態で使う。
-3. `Skill DNA Compiler.exe`をダブルクリックする。
+<p align="center">
+  <strong>English</strong> · <a href="README.ja.md">日本語</a> ·
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-最初はAPIキーや実際のメモを使わず、同梱の`Sample Vault`と「モック抽出」で無料確認できます。
-Windowsの警告が出た場合や、画面の操作順が分からない場合は
-[Betaクイックスタート](docs/beta-quick-start.md)を確認してください。
+---
 
-## 現在の状態
+## Download for Windows
 
-2026-07-22時点で、Windows限定の一般公開Betaです。Obsidian／Markdown
-からCodex用Skillを作る一連の流れ、指示ごとの根拠確認、初心者向けレビュー画面、ローカル
-データ保護、Windows Credential Manager、Python同梱のポータブルZIPを実装しています。
+> [!IMPORTANT]
+> **[Download Skill DNA Compiler v0.1.0-beta.2 for Windows](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.2/skill-dna-compiler-0.1.0-beta.2-windows-x64.zip)**
 
-3種類の実メモで抽出と人間レビューを行い、承認した4件のSkillを別の架空ケースでも前方
-テストしました。現在の限定RCは、checksum、ZIP安全性、packaged import、HTTP health、
-`127.0.0.1`限定通信を含む12項目のオフライン検証に合格しています。現時点で確認済みの
-アプリ機能上の公開停止問題は0件です。配布候補には82パッケージのlicense manifest、収集済み
-license／notice、Streamlitの固定された公式LICENSE／NOTICESも含めて検証しています。
+1. Right-click the downloaded ZIP and select **Extract All**.
+2. Open the extracted folder. Do not run the app from inside the ZIP.
+3. Double-click `Skill DNA Compiler.exe`.
 
-ソースは履歴を分離した[公開リポジトリ](https://github.com/johnfreeman13592-lab/skill-dna-compiler)で
-MPL-2.0として公開し、Windows版はGitHubのPre-releaseから配布します。質問・提案は
-Discussions、不具合はIssues、脆弱性は非公開報告を使用してください。オフライン検証だけを
-一般ユーザーへの価値証明とは扱いません。詳細な証拠は[一般公開Beta準備監査](docs/public-beta-readiness-audit-2026-07-22.md)を参照してください。
+Start with the bundled `Sample Vault` and **mock extraction**. This path needs no API key, sends
+nothing to an external AI, and costs nothing. See the
+[Beta quick start](docs/beta-quick-start.md) for SmartScreen help and the complete screen flow.
 
-公開後に検証する機能仮説と優先順位は[Post-Betaロードマップ](docs/post-beta-roadmap.md)に
-まとめています。これは確約された日程ではなく、利用者のフィードバックで更新します。
+## What changes
 
-## 初めて使う方へ
+| Before | With Skill DNA Compiler |
+|---|---|
+| Useful lessons stay scattered across notes. | Selected notes become reusable Skill candidates. |
+| AI may fill missing details without showing where they came from. | Instructions are reviewed against exact source evidence. |
+| A generated Skill can be difficult to trust or maintain. | Humans approve the candidate, preserve its version and evidence, then export it. |
+| The same lesson may need to be explained again in another project. | An approved Codex `SKILL.md` can carry the procedure into later work. |
 
-最初はOpenAI APIキーを用意せず、同梱のサンプルだけで無料確認できます。
+## What makes it different
 
-1. ZIPを展開し、`Skill DNA Compiler.exe`を起動する。
-2. `Sample Vault`を選び、料金のかからない「モック抽出」を試す。
-3. 候補の根拠を確認し、よいものだけを承認してCodex用`SKILL.md`へ保存する。
+### 🔬 Evidence before confidence
 
-ここまで外部AIへの送信とAPI料金はありません。実際のメモで有料抽出するときだけ、送信する
-JSONと料金上限を確認し、内容と料金の2つへ別々に同意します。選択していないメモは送信対象に
-なりません。詳しい画面順は[Betaクイックスタート](docs/beta-quick-start.md)にあります。
+DNA Trace links final instructions to exact evidence from notes you selected. Unsupported or
+unapproved instructions cannot pass the strict compile and export gates.
 
-### よく出る言葉
+### 🧑 Human approval is mandatory
 
-- `Vault`：ObsidianのMarkdownメモが入ったフォルダです。
-- `候補`：メモから抽出した、再利用できそうな手順やルールです。
-- `根拠の確認`：候補の指示が元メモのどこに基づくか、人が確かめる工程です。
-- `Skill DNA`：承認した候補を、版と根拠付きで保存したものです。
-- `SKILL.md`：Codexが読み込める最終ファイルです。
+Extraction, candidate approval, Skill DNA creation, and file export are separate actions. The app
+never silently approves a candidate or overwrites an existing `SKILL.md`.
 
-迷ったときは、実メモやAPIキーを使わずに`Sample Vault`とモック抽出へ戻れば、料金を発生
-させずに操作を確認できます。
+### 🔒 Local-first by default
 
-## 製品方針
+Your Vault stays read-only. Notes, candidates, Skill DNA, history, backups, and generated files stay
+on your PC. There is no account, operator server, subscription, license activation, or automatic
+telemetry.
 
-- 無料のローカルアプリとして配布する
-- アカウント、月額課金、ライセンス認証、運営者サーバーをMVPへ含めない
-- メモ、候補、Skill DNA、生成Skillは原則としてユーザーのPCへ保存する
-- AIへ送るのはユーザーが選択し、送信前に確認した文章だけにする
-- OpenAI APIは利用者自身のAPIキーと利用料金で使用する
-- Skill候補は自動承認せず、人間の確認を必須にする
+## How it works
 
-詳細は[実装計画](docs/implementation-plan.md)、[アーキテクチャ](docs/architecture.md)、[プライバシーとAPI送信](docs/privacy.md)を参照してください。
+```text
+1. Select notes
+       ↓
+2. Review the exact sanitized JSON and possible API cost
+       ↓
+3. Extract source-backed Skill candidates
+       ↓
+4. Review evidence and approve only what is trustworthy
+       ↓
+5. Save versioned Skill DNA and export Codex SKILL.md
+```
 
-## Betaの起動
+The live OpenAI path uses your own API key and may incur API charges. Before any paid request, the
+app separately asks you to confirm the exact outbound JSON and a conservative cost ceiling.
+Unselected notes are not included.
 
-生成済みZIPを展開し、`Skill DNA Compiler.exe`を起動します。Pythonのインストールは不要です。初回操作、SHA-256確認、SmartScreen、アンインストールは[Betaクイックスタート](docs/beta-quick-start.md)を参照してください。
+## Public Beta status
 
-別Windows PCでの最終確認には[Beta検証チェックリスト](docs/beta-test-checklist.md)を使います。既存Pythonを削除する必要はありません。
-完成時の証拠と既知の制限は[Beta完成監査](docs/beta-completion-audit.md)に記録しています。
+The current release is a Windows-only public Beta. The complete
+Obsidian/Markdown-to-Codex flow, instruction-level evidence review, local data protection, Windows
+Credential Manager integration, and a Python-bundled portable ZIP are implemented.
 
-## 開発環境
+Three real-note trial groups produced four human-reviewed Skills that were forward-tested on
+fictional cases. The published Windows candidate passed checksum, ZIP safety, packaged imports,
+HTTP health, and owned-process `127.0.0.1`-only listener checks. This is technical Beta evidence,
+not proof of broad user value or compatibility with every PC.
 
-- Windows 10/11（最初の配布対象）
-- Python 3.11以上
+See the [public Beta readiness audit](docs/public-beta-readiness-audit-2026-07-22.md) for the exact
+evidence and limitations.
 
-初回完成版はWindows専用です。将来はWindows以外のデスクトップOSにも広げる方針ですが、
-Linux系OSとmacOSは例であり、現時点の固定された次期対象や動作保証ではありません。
-共通の変換・検証ロジックとOS固有の資格情報・ランチャー・配布処理を分離し、Windows版を
-完成させてから実際の需要に応じてOS adapterと受入テストを追加します。
+## Current scope
 
-開発・検証時はPowerShellで次を実行します。
+| Area | Supported now | Later, based on real demand |
+|---|---|---|
+| Input | Explicitly selected Obsidian / Markdown notes | Other note apps, text formats, chats, activity and Git history |
+| Output | Codex-compatible `SKILL.md` | Other agents and human-readable formats |
+| OS | Windows 10/11 x64 | Additional desktop operating systems |
+| Storage | Local SQLite, local files, validated backups | No large cloud platform planned for the current stage |
+
+The first product stays intentionally narrow. Internal boundaries keep UI, domain logic, storage,
+security, platform-specific behavior, and OpenAI integration separate so future adapters do not
+require rewriting the safety rules.
+
+## Next experiment
+
+Generic Skill generation is already crowded. The next core experiment is therefore
+**Cross-Session Skill Discovery**, not “generate more Skills.”
+
+It compares the same subject using:
+
+- a project memo only; and
+- the same memo plus explicitly selected conversation or activity records.
+
+The experiment asks whether the extra evidence supports one of three decisions:
+
+1. create a new Skill;
+2. update an existing Skill; or
+3. create no Skill and route the information to `AGENTS.md`, Memory, MCP, a deterministic Workflow,
+   or nowhere.
+
+Read the [experiment plan](docs/cross-session-skill-discovery-experiment.md) and the broader
+[Post-Beta roadmap](docs/post-beta-roadmap.md).
+
+## Safety and privacy
+
+- Only explicitly selected notes can enter an outbound payload.
+- Titles, relative paths, and content are scanned and redacted locally.
+- A zero-finding scan is not treated as a guarantee; the exact JSON still requires human review.
+- OpenAI requests use Structured Outputs and `store=False`.
+- The packaged app stores the API key only in Windows Credential Manager and never redisplays it.
+- API keys and note bodies are not written to SQLite or normal logs.
+- Export is restricted to a user-approved existing destination and uses atomic replacement.
+- Database backup and restore include SQLite integrity checks.
+
+Read [Privacy and API transmission](docs/privacy.md) for the full boundary.
+
+## Development
+
+<details>
+<summary><strong>Local development commands</strong></summary>
+
+Requirements: Windows 10/11 and Python 3.11 or later.
 
 ```powershell
 py -3.11 -m venv .venv
@@ -95,46 +155,48 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-現在の検証では、引用検証、SQLiteの外部キー、候補レビュー、Skill DNA化と版履歴、出力先境界、無確認上書き拒否、出力履歴、Responses APIの`store=False`構造化リクエストを自動テストしています。生成したUTF-8の`SKILL.md`はCodexの`skill-creator`付属検証器でも有効と確認済みです。
+Development secrets belong in ignored `.env.local`. Never put an API key in source code, GitHub
+Issues, logs, or generated Skills.
 
-ネットワーク不要のサンプルVault E2Eは、読込から伏字、候補、承認、Skill DNA、`SKILL.md`出力までを固定期待値で検証します。Betaでは資格情報ストア、二重起動防止、localhost限定起動、配布ランチャーのテストも追加しています。
+</details>
 
-開発時のAPIキーはGit管理外の`.env.local`に置きます。Beta版では設定画面からWindows Credential Managerへ保存し、平文ファイルへフォールバックしません。キーをREADME、ソースコード、Issue、ログへ貼り付けないでください。
-
-## Betaパッケージの作成
+<details>
+<summary><strong>Build and verify the Windows package</strong></summary>
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
-```
 
-`dist`へ`skill-dna-compiler-0.1.0-beta.2-windows-x64.zip`と`.sha256`を生成します。完成済みの`beta.1`成果物は上書きしません。成果物はGit管理外です。
-
-既存成果物は同名で上書きしません。開発中の別名検証物は、たとえば
-`-ArtifactLabel 0.1.0-beta.2-dogfood-20260721`を付けて作成します。
-
-## Windows候補ZIPのオフライン検証
-
-成果物のchecksum、内容、依存関係、packaged import、HTTP health、loopback限定通信を一括確認できます。検証中のDBと資格情報は一時領域へ隔離され、既存レポートは上書きしません。
-
-```powershell
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
   .\dist\skill-dna-compiler-0.1.0-beta.2-windows-x64.zip `
   --report-dir .\build\verification\beta.2
 ```
 
-終了コードは、合格`0`、検証不合格`1`、ツール自体を実行できない場合`2`です。JSONとMarkdownの両方へ証拠を保存します。
+The verifier checks the checksum, archive limits and safe paths, required and forbidden files,
+dependency provenance and licenses, packaged imports, HTTP health, process ownership, and
+loopback-only listeners. Exit codes are `0` for pass, `1` for a validation failure, and `2` when
+the verifier itself cannot run.
 
-## データ保存
+</details>
 
-SQLiteデータベースの既定保存先はOSのユーザーデータ領域です。バックアップはDBの隣の`skill-dna.db.backups`へ保存され、作成・復元時にSQLiteの整合性を検査します。古い未バージョンDBをv1へ移行する前と、手動復元の直前には自動で安全バックアップを作ります。Vaultの元ファイルは変更しません。
+## Documentation
 
-## リポジトリ運用
+- [Beta quick start](docs/beta-quick-start.md)
+- [Privacy and API transmission](docs/privacy.md)
+- [Architecture and safety boundaries](docs/architecture.md)
+- [Implementation plan](docs/implementation-plan.md)
+- [Beta test checklist](docs/beta-test-checklist.md)
+- [Post-Beta roadmap](docs/post-beta-roadmap.md)
 
-`.env.local`、SQLite、生成Skill、ビルド成果物はGit管理外です。内部開発リポジトリの履歴は
-公開せず、監査済みallowlistから作る履歴なしの公開リポジトリを使用します。
+## Feedback and contributions
+
+- Use [Discussions](https://github.com/johnfreeman13592-lab/skill-dna-compiler/discussions) for
+  questions and ideas.
+- Use [Issues](https://github.com/johnfreeman13592-lab/skill-dna-compiler/issues) for reproducible
+  bugs.
+- Use GitHub private vulnerability reporting for security issues.
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a change.
 
 ## License
 
-Skill DNA CompilerのソースコードはMozilla Public License 2.0（MPL-2.0）で公開しています。
-全文は[LICENSE](LICENSE)、依存ライブラリは[Third-party notices](THIRD_PARTY_NOTICES.md)を
-参照してください。
+Skill DNA Compiler is available under the [Mozilla Public License 2.0](LICENSE). Third-party
+licenses and notices are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

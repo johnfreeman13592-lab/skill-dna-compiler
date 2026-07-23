@@ -21,6 +21,8 @@ ROOT_FILES = (
     "LICENSE",
     "pyproject.toml",
     "README.md",
+    "README.ja.md",
+    "README.zh-CN.md",
     "SECURITY.md",
     "THIRD_PARTY_NOTICES.md",
 )
