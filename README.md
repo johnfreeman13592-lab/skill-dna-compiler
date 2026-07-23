@@ -20,6 +20,10 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
+> [!NOTE]
+> 👋 **Thanks for visiting Skill DNA Compiler!** This project is still in its early stages.
+> Try the Beta, share what worked or felt confusing, and help us shape what it becomes next.
+
 ---
 
 ## Download for Windows

@@ -20,6 +20,11 @@
   <strong>简体中文</strong>
 </p>
 
+> [!NOTE]
+> 👋 **感谢你发现 Skill DNA Compiler！**
+> 这个项目才刚刚起步。欢迎试用 Beta 版，并告诉我们哪些地方对你有帮助、
+> 哪些地方不够清楚。希望能和你一起塑造 Skill DNA Compiler 的未来。
+
 ---
 
 ## 下载 Windows 版本
