@@ -2,6 +2,18 @@
 
 Skill DNA Compilerは、ユーザーが選択したObsidianのMarkdownメモから、別のプロジェクトでも再利用できる手順やルールを抽出し、人間の承認を経てCodex用`SKILL.md`へ変換するローカルアプリです。
 
+## Windows版を試す
+
+**[Skill DNA Compiler v0.1.0-beta.2 Windows版を直接ダウンロード（ZIP）](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.2/skill-dna-compiler-0.1.0-beta.2-windows-x64.zip)**
+
+1. ダウンロードしたZIPを右クリックし、**「すべて展開」**を選ぶ。
+2. 展開後のフォルダを開く。ZIPの中から直接起動せず、フォルダ全体を展開した状態で使う。
+3. `Skill DNA Compiler.exe`をダブルクリックする。
+
+最初はAPIキーや実際のメモを使わず、同梱の`Sample Vault`と「モック抽出」で無料確認できます。
+Windowsの警告が出た場合や、画面の操作順が分からない場合は
+[Betaクイックスタート](docs/beta-quick-start.md)を確認してください。
+
 ## 現在の状態
 
 2026-07-22時点で、Windows限定の一般公開Betaです。Obsidian／Markdown
