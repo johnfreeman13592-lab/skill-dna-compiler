@@ -21,6 +21,8 @@ ROOT_FILES = (
     "LICENSE",
     "pyproject.toml",
     "README.md",
+    "README.ja.md",
+    "README.zh-CN.md",
     "SECURITY.md",
     "THIRD_PARTY_NOTICES.md",
 )
@@ -30,6 +32,7 @@ PUBLIC_DOCS = (
     "beta-completion-audit.md",
     "beta-quick-start.md",
     "beta-test-checklist.md",
+    "cross-session-skill-discovery-experiment.md",
     "dependency-license-audit-2026-07-22.md",
     "implementation-plan.md",
     "post-beta-roadmap.md",
