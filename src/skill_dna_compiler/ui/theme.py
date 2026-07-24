@@ -4,6 +4,8 @@ from html import escape
 
 import streamlit as st
 
+from .i18n import Language, text
+
 
 def theme_css() -> str:
     """Return the self-contained visual theme without external assets."""
@@ -336,8 +338,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible,
 """
 
 
-def hero_html(release_label: str) -> str:
+def hero_html(release_label: str, language: Language = "en") -> str:
     safe_label = escape(release_label)
+    copy = escape(text(language, "hero.copy"))
+    safety_aria = escape(text(language, "hero.safety_aria"))
+    selected_only = escape(text(language, "hero.selected_only"))
+    human_approval = escape(text(language, "hero.human_approval"))
+    local_storage = escape(text(language, "hero.local_storage"))
     rungs = "".join(
         f'<span class="sdc-rung" style="--rung-top:{top}%;--rung-angle:{angle}deg"></span>'
         for top, angle in ((18, -12), (32, 7), (46, 14), (60, -7), (74, -14))
@@ -348,12 +355,12 @@ def hero_html(release_label: str) -> str:
     <div class="sdc-kicker">Local-first knowledge compiler</div>
     <h1 id="sdc-product-title">Skill DNA<br>Compiler</h1>
     <p class="sdc-hero-copy">
-      Obsidianに蓄積した経験から、出典を保った再利用可能なSkillを編成する。
+      {copy}
     </p>
-    <div class="sdc-pill-row" aria-label="製品の安全特性">
-      <span class="sdc-pill">選択メモだけを解析</span>
-      <span class="sdc-pill">人間が承認</span>
-      <span class="sdc-pill">ローカル保存</span>
+    <div class="sdc-pill-row" aria-label="{safety_aria}">
+      <span class="sdc-pill">{selected_only}</span>
+      <span class="sdc-pill">{human_approval}</span>
+      <span class="sdc-pill">{local_storage}</span>
       <span class="sdc-pill">{safe_label}</span>
     </div>
   </div>
@@ -365,13 +372,13 @@ def hero_html(release_label: str) -> str:
 """
 
 
-def workflow_html() -> str:
+def workflow_html(language: Language = "en") -> str:
     steps = (
-        ("01", "SELECT", "メモを選ぶ"),
-        ("02", "SEQUENCE", "送信内容を確認"),
-        ("03", "REVIEW", "候補をレビュー"),
-        ("04", "COMPILE", "Skill DNA化"),
-        ("05", "EXPORT", "Codexへ出力"),
+        ("01", "SELECT", text(language, "workflow.select")),
+        ("02", "SEQUENCE", text(language, "workflow.payload")),
+        ("03", "REVIEW", text(language, "workflow.review")),
+        ("04", "COMPILE", text(language, "workflow.compile")),
+        ("05", "EXPORT", text(language, "workflow.export")),
     )
     cards = "".join(
         '<div class="sdc-step">'
@@ -379,20 +386,34 @@ def workflow_html() -> str:
         f"<strong>{label}</strong><span>{description}</span></div>"
         for number, label, description in steps
     )
-    return f'<nav class="sdc-workflow" aria-label="Skill生成の5工程">{cards}</nav>'
+    aria_label = escape(text(language, "workflow.aria"))
+    return f'<nav class="sdc-workflow" aria-label="{aria_label}">{cards}</nav>'
 
 
-def safety_sidebar_html(release_label: str, *, api_key_configured: bool) -> str:
-    key_state = "設定済み" if api_key_configured else "未設定"
+def safety_sidebar_html(
+    release_label: str,
+    *,
+    api_key_configured: bool,
+    language: Language = "en",
+) -> str:
+    key_state = text(
+        language,
+        "sidebar.key_configured" if api_key_configured else "sidebar.key_missing",
+    )
+    hidden_state = text(language, "sidebar.key_hidden", state=key_state)
+    title = escape(text(language, "sidebar.title"))
+    vault_status = escape(text(language, "sidebar.vault"))
+    gate_status = escape(text(language, "sidebar.gates"))
+    network_status = escape(text(language, "sidebar.network"))
     return f"""
-<div class="sdc-side-title">LOCAL SAFETY STATUS</div>
-<div class="sdc-safety-card"><strong>LOCAL VAULT</strong><span>元メモは読み取り専用</span></div>
-<div class="sdc-safety-card"><strong>HUMAN GATE</strong><span>承認・変換・出力を分離</span></div>
+<div class="sdc-side-title">{title}</div>
+<div class="sdc-safety-card"><strong>LOCAL VAULT</strong><span>{vault_status}</span></div>
+<div class="sdc-safety-card"><strong>HUMAN GATE</strong><span>{gate_status}</span></div>
 <div class="sdc-safety-card">
-  <strong>API CREDENTIAL</strong><span>{key_state}・値は非表示</span>
+  <strong>API CREDENTIAL</strong><span>{escape(hidden_state)}</span>
 </div>
 <div class="sdc-safety-card">
-  <strong>NETWORK SCOPE</strong><span>選択・確認済みPayloadのみ</span>
+  <strong>NETWORK SCOPE</strong><span>{network_status}</span>
 </div>
 <div class="sdc-build">BUILD {escape(release_label)}</div>
 """
@@ -402,22 +423,26 @@ def inject_theme() -> None:
     st.markdown(theme_css(), unsafe_allow_html=True)
 
 
-def render_hero(release_label: str) -> None:
-    st.markdown(hero_html(release_label), unsafe_allow_html=True)
+def render_hero(release_label: str, language: Language = "en") -> None:
+    st.markdown(hero_html(release_label, language), unsafe_allow_html=True)
 
 
-def render_workflow() -> None:
-    st.markdown(workflow_html(), unsafe_allow_html=True)
+def render_workflow(language: Language = "en") -> None:
+    st.markdown(workflow_html(language), unsafe_allow_html=True)
 
 
 def render_local_safety_sidebar(
-    release_label: str, *, api_key_configured: bool
+    release_label: str,
+    *,
+    api_key_configured: bool,
+    language: Language = "en",
 ) -> None:
     with st.sidebar:
         st.markdown(
             safety_sidebar_html(
                 release_label,
                 api_key_configured=api_key_configured,
+                language=language,
             ),
             unsafe_allow_html=True,
         )

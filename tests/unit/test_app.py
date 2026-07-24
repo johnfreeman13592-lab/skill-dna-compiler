@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
 
+import app as app_module
 from skill_dna_compiler import __release_label__
 from skill_dna_compiler.config.settings import get_settings
 
@@ -28,24 +29,87 @@ def test_app_renders_phase_two_vault_controls(tmp_path, monkeypatch):
         for item in app.markdown
     )
     assert any(__release_label__ in item.value for item in app.markdown)
-    assert any(item.label == "詳しい5ステップを見る" for item in app.expander)
-    assert any("はじめての最短ルート" in item.value for item in app.markdown)
-    assert any(widget.label == "Vaultフォルダ" for widget in app.text_input)
-    assert any(button.label == "Vaultを読み込む" for button in app.button)
+    assert any(item.label == "Show the detailed five steps" for item in app.expander)
+    assert any("Fastest first-use path" in item.value for item in app.markdown)
+    assert any(widget.label == "Vault folder" for widget in app.text_input)
+    assert any(button.label == "Load Vault" for button in app.button)
     assert not next(button for button in app.button if "Vault" in button.label).disabled
-    assert any(button.label == "今すぐDBバックアップを作成" for button in app.button)
-    assert any("OpenAI APIキー設定" in item.value for item in app.subheader)
+    assert any(button.label == "Create database backup now" for button in app.button)
+    assert any("OpenAI API key settings" in item.value for item in app.subheader)
     workflow_headings = [
         item.value
         for item in app.subheader
         if item.value.startswith(("1.", "3.", "4.", "5."))
     ]
     assert workflow_headings == [
-        "1. Obsidianメモを選ぶ",
-        "3. Skill候補をレビューする",
-        "4. 承認済み候補をSkill DNA化する",
-        "5. Codex Skillを出力する",
+        "1. Select Obsidian notes",
+        "3. Review Skill candidates",
+        "4. Compile an approved candidate as Skill DNA",
+        "5. Export a Codex Skill",
     ]
+
+
+def test_app_defaults_to_english_and_switches_ui_language(tmp_path, monkeypatch):
+    monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "app.db"))
+    app = AppTest.from_file("app.py").run(timeout=30)
+
+    language = next(widget for widget in app.selectbox if widget.label == "Language")
+    assert language.value == "en"
+    assert any("1. Select Obsidian notes" in item.value for item in app.subheader)
+
+    language.set_value("ja")
+    app.run(timeout=30)
+    assert not app.exception
+    assert any("1. Obsidianメモを選ぶ" in item.value for item in app.subheader)
+
+    language = next(widget for widget in app.selectbox if widget.label == "Language")
+    language.set_value("zh-CN")
+    app.run(timeout=30)
+    assert not app.exception
+    assert any("1. 选择 Obsidian 笔记" in item.value for item in app.subheader)
+
+
+def test_packaged_sample_vault_resolves_next_to_executable(tmp_path, monkeypatch):
+    executable = tmp_path / "Skill DNA Compiler.exe"
+    executable.touch()
+    sample_vault = tmp_path / "Sample Vault"
+    sample_vault.mkdir()
+    monkeypatch.delenv("SKILL_DNA_SAMPLE_VAULT_PATH", raising=False)
+    monkeypatch.setattr(app_module.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(app_module.sys, "executable", str(executable))
+
+    assert app_module._bundled_sample_vault() == sample_vault.resolve()
+
+
+def test_sample_vault_shortcut_only_fills_path_until_user_loads(
+    tmp_path,
+    monkeypatch,
+):
+    database_path = tmp_path / "app.db"
+    sample_vault = PROJECT_ROOT / "tests" / "fixtures" / "sample_vault"
+    monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
+    monkeypatch.setenv("SKILL_DNA_SAMPLE_VAULT_PATH", str(sample_vault))
+    app = AppTest.from_file("app.py").run(timeout=30)
+
+    next(
+        button for button in app.button if button.label == "Use bundled Sample Vault"
+    ).click()
+    app.run(timeout=30)
+
+    assert not app.exception
+    assert next(
+        widget for widget in app.text_input if widget.label == "Vault folder"
+    ).value == str(sample_vault)
+    assert any("Press **Load Vault**" in item.value for item in app.info)
+    with sqlite3.connect(database_path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM vaults").fetchone() == (0,)
+
+    next(button for button in app.button if button.label == "Load Vault").click()
+    app.run(timeout=30)
+
+    assert not app.exception
+    with sqlite3.connect(database_path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM vaults").fetchone() == (1,)
 
 
 def test_app_starts_in_clean_temporary_environment_without_api_key(
@@ -61,8 +125,8 @@ def test_app_starts_in_clean_temporary_environment_without_api_key(
     assert not app.exception
     assert database_path.is_file()
     assert any("OPENAI_API_KEY" in message.value for message in app.warning)
-    assert any("表示できるSkill候補はまだありません" in item.value for item in app.info)
-    assert any("出力できるSkill DNAはまだありません" in item.value for item in app.info)
+    assert any("No Skill candidates are available yet" in item.value for item in app.info)
+    assert any("No current Skill DNA is eligible for export" in item.value for item in app.info)
     assert not list(tmp_path.rglob("SKILL.md"))
 
 
@@ -90,44 +154,44 @@ def test_production_app_saves_and_deletes_key_via_keyring(tmp_path, monkeypatch)
     save_button = next(
         button
         for button in app.button
-        if button.label == "Windows資格情報ストアへ保存"
+        if button.label == "Save to Windows Credential Manager"
     )
     assert not save_button.disabled
 
-    key_input = next(widget for widget in app.text_input if widget.label == "OpenAI APIキー")
+    key_input = next(widget for widget in app.text_input if widget.label == "OpenAI API key")
     key_input.set_value(test_key)
     app.run(timeout=30)
     next(
         button
         for button in app.button
-        if button.label == "Windows資格情報ストアへ保存"
+        if button.label == "Save to Windows Credential Manager"
     ).click()
     app.run(timeout=30)
 
     assert not app.exception
     assert stored
     assert test_key.encode() not in database_path.read_bytes()
-    assert any("API通信は行っていません" in item.value for item in app.success)
+    assert any("No API request was made" in item.value for item in app.success)
     assert next(
-        widget for widget in app.text_input if widget.label == "OpenAI APIキー"
+        widget for widget in app.text_input if widget.label == "OpenAI API key"
     ).value == ""
 
     next(
         checkbox
         for checkbox in app.checkbox
-        if checkbox.label == "保存済みAPIキーを削除することを確認しました"
+        if checkbox.label == "I confirm that I want to delete the saved API key"
     ).set_value(True)
     app.run(timeout=30)
     next(
         button
         for button in app.button
-        if button.label == "Windows資格情報ストアから削除"
+        if button.label == "Delete from Windows Credential Manager"
     ).click()
     app.run(timeout=30)
 
     assert not app.exception
     assert not stored
-    assert any("保存済みAPIキーを削除しました" in item.value for item in app.success)
+    assert any("Deleted the saved API key" in item.value for item in app.success)
 
 
 def test_app_reports_missing_vault_in_clean_temporary_environment(
@@ -139,11 +203,11 @@ def test_app_reports_missing_vault_in_clean_temporary_environment(
     app = AppTest.from_file(str(PROJECT_ROOT / "app.py")).run(timeout=30)
 
     missing_vault = tmp_path / "missing-vault"
-    next(widget for widget in app.text_input if widget.label == "Vaultフォルダ").set_value(
+    next(widget for widget in app.text_input if widget.label == "Vault folder").set_value(
         str(missing_vault)
     )
     app.run(timeout=30)
-    next(button for button in app.button if button.label == "Vaultを読み込む").click()
+    next(button for button in app.button if button.label == "Load Vault").click()
     app.run(timeout=30)
 
     assert not app.exception
@@ -157,7 +221,7 @@ def test_app_creates_validated_manual_database_backup(tmp_path, monkeypatch):
     app = AppTest.from_file("app.py").run(timeout=30)
 
     next(
-        button for button in app.button if button.label == "今すぐDBバックアップを作成"
+        button for button in app.button if button.label == "Create database backup now"
     ).click()
     app.run(timeout=30)
 
@@ -165,9 +229,9 @@ def test_app_creates_validated_manual_database_backup(tmp_path, monkeypatch):
     backups = list(backup_directory.glob("*.sqlite3"))
     assert not app.exception
     assert len(backups) == 1
-    assert any("検証済みバックアップ" in message.value for message in app.success)
+    assert any("validated backup" in message.value for message in app.success)
     restore_button = next(
-        button for button in app.button if button.label == "選択したDBバックアップを復元"
+        button for button in app.button if button.label == "Restore selected database backup"
     )
     assert restore_button.disabled is True
 
@@ -177,7 +241,7 @@ def test_app_lists_corrupt_backup_without_offering_it_for_restore(tmp_path, monk
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     app = AppTest.from_file("app.py").run(timeout=30)
     next(
-        button for button in app.button if button.label == "今すぐDBバックアップを作成"
+        button for button in app.button if button.label == "Create database backup now"
     ).click()
     app.run(timeout=30)
     backup_directory = tmp_path / "app.db.backups"
@@ -188,11 +252,11 @@ def test_app_lists_corrupt_backup_without_offering_it_for_restore(tmp_path, monk
 
     assert not app.exception
     restore_select = next(
-        widget for widget in app.selectbox if widget.label == "復元するバックアップ"
+        widget for widget in app.selectbox if widget.label == "Backup to restore"
     )
     assert len(restore_select.options) == 1
     assert "corrupt.sqlite3" not in restore_select.options
-    assert any("破損または読取不能" in str(table.value) for table in app.dataframe)
+    assert any("Corrupt or unreadable" in str(table.value) for table in app.dataframe)
     assert corrupt.is_file()
 
 
@@ -203,7 +267,7 @@ def test_app_skips_permission_denied_backup_without_deleting_it(tmp_path, monkey
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     app = AppTest.from_file("app.py").run(timeout=30)
     next(
-        button for button in app.button if button.label == "今すぐDBバックアップを作成"
+        button for button in app.button if button.label == "Create database backup now"
     ).click()
     app.run(timeout=30)
     unreadable = tmp_path / "app.db.backups" / "unreadable.sqlite3"
@@ -221,12 +285,12 @@ def test_app_skips_permission_denied_backup_without_deleting_it(tmp_path, monkey
 
     assert not app.exception
     assert any(
-        "検査できないバックアップを復元候補から除外" in message.value
+        "Excluded backups that could not be inspected" in message.value
         and unreadable.name in message.value
         for message in app.warning
     )
     restore_select = next(
-        widget for widget in app.selectbox if widget.label == "復元するバックアップ"
+        widget for widget in app.selectbox if widget.label == "Backup to restore"
     )
     assert len(restore_select.options) == 1
     assert unreadable.is_file()
@@ -239,14 +303,14 @@ def test_app_scans_and_previews_vault(tmp_path, monkeypatch):
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "app.db"))
     app = AppTest.from_file("app.py").run(timeout=30)
 
-    vault_input = next(widget for widget in app.text_input if widget.label == "Vaultフォルダ")
+    vault_input = next(widget for widget in app.text_input if widget.label == "Vault folder")
     vault_input.set_value(str(vault))
-    load_button = next(button for button in app.button if button.label == "Vaultを読み込む")
+    load_button = next(button for button in app.button if button.label == "Load Vault")
     load_button.click()
     app.run(timeout=30)
 
     assert not app.exception
-    assert any("1件読み込みました" in message.value for message in app.success)
+    assert any("Loaded 1 Markdown note" in message.value for message in app.success)
     assert any("Reuse existing code" in code.value for code in app.code)
 
 
@@ -258,40 +322,40 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "app.db"))
     app = AppTest.from_file("app.py").run(timeout=30)
 
-    next(widget for widget in app.text_input if widget.label == "Vaultフォルダ").set_value(
+    next(widget for widget in app.text_input if widget.label == "Vault folder").set_value(
         str(vault)
     )
-    next(button for button in app.button if button.label == "Vaultを読み込む").click()
+    next(button for button in app.button if button.label == "Load Vault").click()
     app.run(timeout=30)
     next(
         widget
         for widget in app.multiselect
-        if widget.label == "AI分析対象候補（まだ送信されません）"
+        if widget.label == "Notes to analyze (not sent yet)"
     ).set_value(["Example.md"])
     app.run(timeout=30)
-    next(button for button in app.button if button.label == "送信内容を準備する").click()
+    next(button for button in app.button if button.label == "Prepare outbound content").click()
     app.run(timeout=30)
 
     payload_code = next(code.value for code in app.code if '"schema_version"' in code.value)
     assert secret not in payload_code
     assert "[REDACTED:openai_api_key]" in payload_code
-    assert any("自動で伏字" in message.value for message in app.warning)
+    assert any("automatically redacted" in message.value for message in app.warning)
     live_button = next(
         button
         for button in app.button
-        if button.label == "OpenAIで実抽出する（API料金が発生します）"
+        if button.label == "Extract with OpenAI (API charges may apply)"
     )
     assert live_button.disabled is True
-    assert any("入力推定" in item.value for item in app.markdown)
-    assert any("上限目安" in item.value for item in app.markdown)
+    assert any("Estimated input" in item.value for item in app.markdown)
+    assert any("Conservative maximum" in item.value for item in app.markdown)
 
     next(
         checkbox
         for checkbox in app.checkbox
-        if checkbox.label == "伏字済みの送信内容を確認しました"
+        if checkbox.label == "I reviewed the redacted outbound content"
     ).set_value(True)
     app.run(timeout=30)
-    next(button for button in app.button if button.label == "モック抽出を実行する").click()
+    next(button for button in app.button if button.label == "Run mock extraction").click()
     app.run(timeout=30)
 
     with sqlite3.connect(tmp_path / "app.db") as connection:
@@ -303,23 +367,27 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
     assert status == ("completed",)
     assert candidate_status == ("pending",)
     assert generated_skills == (0,)
-    assert any(button.label == "承認する" for button in app.button)
-    assert next(button for button in app.button if button.label == "承認する").disabled
+    assert any(button.label == "Approve" for button in app.button)
+    assert next(button for button in app.button if button.label == "Approve").disabled
     assert any("DNA Trace" in item.value for item in app.markdown)
     assert any(
-        widget.label == "元メモに、このルールを直接支える内容がありますか？"
+        widget.label == "Does the source note directly support this rule?"
         for widget in app.selectbox
     )
     assert any(
-        widget.label == "引用とルールの意味・条件は一致していますか？"
+        widget.label
+        == "Do the citation and rule have the same meaning and conditions?"
         for widget in app.selectbox
     )
     assert any(
-        button.label == "このルールの確認結果を保存" for button in app.button
+        button.label == "Save this rule review" for button in app.button
     )
-    assert any("モック抽出が完了" in message.value for message in app.success)
-    assert any("検証済みSkill候補" in item.value for item in app.markdown)
-    assert any("これはAIが抽出した候補ではありません" in item.value for item in app.warning)
+    assert any("Mock extraction completed" in message.value for message in app.success)
+    assert any("Verified Skill candidates" in item.value for item in app.markdown)
+    assert any(
+        "This candidate was not extracted by AI" in item.value
+        for item in app.warning
+    )
 
     # A candidate approved by an older app version must remain visible for re-review,
     # while downstream compilation excludes it until the current trace gate passes.
@@ -329,27 +397,27 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
     app.run(timeout=30)
 
     assert not app.exception
-    assert any("以前の版で承認済み" in item.value for item in app.warning)
-    assert any("DNA Trace未完了のため除外" in item.value for item in app.warning)
-    assert any("DNA Trace確認済み" in item.value for item in app.info)
+    assert any("approved by an older version" in item.value for item in app.warning)
+    assert any("DNA Trace is incomplete" in item.value for item in app.warning)
+    assert any("No candidate currently passes DNA Trace" in item.value for item in app.info)
 
     with sqlite3.connect(tmp_path / "app.db") as connection:
         connection.execute("UPDATE skill_candidates SET status = 'pending'")
         connection.commit()
     app.run(timeout=30)
 
-    next(button for button in app.button if button.label == "モック抽出を実行する").click()
+    next(button for button in app.button if button.label == "Run mock extraction").click()
     app.run(timeout=30)
     merge_checkbox = next(
         checkbox
         for checkbox in app.checkbox
         if checkbox.label
-        == "元の2候補を保留にし、統合結果を新しい未確認候補として保存します"
+        == "Put both source candidates on hold and save the merge as a new Pending candidate"
     )
     merge_checkbox.set_value(True)
     app.run(timeout=30)
     next(
-        button for button in app.button if button.label == "未確認候補として統合"
+        button for button in app.button if button.label == "Merge as a Pending candidate"
     ).click()
     app.run(timeout=30)
 

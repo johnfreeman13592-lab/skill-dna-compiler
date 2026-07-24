@@ -78,7 +78,30 @@ def test_build_demo_result_uses_an_exact_payload_quote():
     reference = result.candidates[0].source_references[0]
     assert reference.document_id == "doc_1"
     assert reference.quote in payload.documents[0].content
-    assert "AIが抽出" in result.candidates[0].warnings[0]
+    assert result.candidates[0].warnings == ["This candidate was not extracted by AI"]
+
+
+def test_build_demo_result_localizes_generated_content():
+    payload = ExtractionPayload(
+        documents=[
+            PayloadDocument(
+                document_id="doc_1",
+                title="Rule",
+                path="Rule.md",
+                content_hash="a" * 64,
+                content="Reusable rule",
+            )
+        ],
+        redaction_count=0,
+    )
+
+    japanese = build_demo_extraction_result(payload, language="ja")
+    chinese = build_demo_extraction_result(payload, language="zh-CN")
+
+    assert japanese.candidates[0].warnings == [
+        "これはAIが抽出した候補ではありません"
+    ]
+    assert chinese.candidates[0].warnings == ["此候选并非由 AI 提取"]
 
 
 def test_build_demo_result_allows_empty_documents():

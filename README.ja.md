@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.2"><img alt="リリース" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.3"><img alt="リリース" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
   <img alt="対応OS" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
   <a href="LICENSE"><img alt="ライセンス" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
   <img alt="ローカルファースト" src="https://img.shields.io/badge/data-local--first-059669">
@@ -30,7 +30,7 @@
 ## Windows版をダウンロード
 
 > [!IMPORTANT]
-> **[Skill DNA Compiler v0.1.0-beta.2 Windows版をダウンロード](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.2/skill-dna-compiler-0.1.0-beta.2-windows-x64.zip)**
+> **[Skill DNA Compiler v0.1.0-beta.3 Windows版をダウンロード](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.3/skill-dna-compiler-0.1.0-beta.3-windows-x64.zip)**
 
 1. ダウンロードしたZIPを右クリックし、**「すべて展開」**を選ぶ。
 2. 展開後のフォルダを開く。ZIPの中から直接起動しない。
@@ -110,25 +110,6 @@ Windows候補はchecksum、ZIP安全性、packaged import、HTTP health、検証
 最初の製品は意図的に狭くしています。一方でUI、ドメインロジック、保存、安全性、OS固有処理、
 OpenAI連携を分離し、将来のadapter追加で安全境界を書き直さない構造を維持します。
 
-## 次の実験
-
-一般的なSkill生成はすでに競争が激しいため、次の中核実験は「さらに多く生成する」ことではなく
-**Cross-Session Skill Discovery**です。
-
-同じ題材を次の2条件で比較します。
-
-- プロジェクトメモだけ
-- 同じメモと、ユーザーが明示選択した会話・行動記録
-
-追加情報を読んだ結果を、次の3つに分けます。
-
-1. 新しいSkillを作る。
-2. 既存Skillを更新する。
-3. Skillを作らず、`AGENTS.md`、Memory、MCP、決定的Workflow、または保存なしへ振り分ける。
-
-詳しくは[実験計画](docs/cross-session-skill-discovery-experiment.md)と
-[Post-Betaロードマップ](docs/post-beta-roadmap.md)を参照してください。
-
 ## 安全性とプライバシー
 
 - 外部送信対象になるのは、明示選択したメモだけです。
@@ -169,7 +150,7 @@ py -3.11 -m venv .venv
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
-  .\dist\skill-dna-compiler-0.1.0-beta.2-windows-x64.zip `
+  .\dist\skill-dna-compiler-0.1.0-beta.3-windows-x64.zip `
   --report-dir .\build\verification\beta.2
 ```
 
@@ -186,7 +167,6 @@ packaged import、HTTP health、プロセス所有権、loopback限定listener�
 - [アーキテクチャと安全境界](docs/architecture.md)
 - [実装計画](docs/implementation-plan.md)
 - [Beta検証チェックリスト](docs/beta-test-checklist.md)
-- [Post-Betaロードマップ](docs/post-beta-roadmap.md)
 
 ## フィードバックと開発参加
 

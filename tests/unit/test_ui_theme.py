@@ -39,7 +39,19 @@ def test_workflow_preserves_the_five_explicit_product_steps():
 def test_sidebar_shows_credential_state_without_a_secret_value():
     configured = safety_sidebar_html("v0.1.0-beta.2", api_key_configured=True)
     missing = safety_sidebar_html("v0.1.0-beta.2", api_key_configured=False)
+    japanese = safety_sidebar_html(
+        "v0.1.0-beta.2",
+        api_key_configured=True,
+        language="ja",
+    )
+    chinese = safety_sidebar_html(
+        "v0.1.0-beta.2",
+        api_key_configured=True,
+        language="zh-CN",
+    )
 
-    assert "設定済み・値は非表示" in configured
-    assert "未設定・値は非表示" in missing
-    assert "APIキー" not in configured
+    assert "Configured; value hidden" in configured
+    assert "Not configured; value hidden" in missing
+    assert "設定済み・値は非表示" in japanese
+    assert "已配置；不显示密钥值" in chinese
+    assert "sk-secret-value" not in configured
