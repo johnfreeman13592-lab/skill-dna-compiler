@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.2"><img alt="Release" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.3"><img alt="Release" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-059669">
@@ -29,7 +29,7 @@
 ## Download for Windows
 
 > [!IMPORTANT]
-> **[Download Skill DNA Compiler v0.1.0-beta.2 for Windows](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.2/skill-dna-compiler-0.1.0-beta.2-windows-x64.zip)**
+> **[Download Skill DNA Compiler v0.1.0-beta.3 for Windows](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.3/skill-dna-compiler-0.1.0-beta.3-windows-x64.zip)**
 
 1. Right-click the downloaded ZIP and select **Extract All**.
 2. Open the extracted folder. Do not run the app from inside the ZIP.
@@ -111,26 +111,6 @@ The first product stays intentionally narrow. Internal boundaries keep UI, domai
 security, platform-specific behavior, and OpenAI integration separate so future adapters do not
 require rewriting the safety rules.
 
-## Next experiment
-
-Generic Skill generation is already crowded. The next core experiment is therefore
-**Cross-Session Skill Discovery**, not “generate more Skills.”
-
-It compares the same subject using:
-
-- a project memo only; and
-- the same memo plus explicitly selected conversation or activity records.
-
-The experiment asks whether the extra evidence supports one of three decisions:
-
-1. create a new Skill;
-2. update an existing Skill; or
-3. create no Skill and route the information to `AGENTS.md`, Memory, MCP, a deterministic Workflow,
-   or nowhere.
-
-Read the [experiment plan](docs/cross-session-skill-discovery-experiment.md) and the broader
-[Post-Beta roadmap](docs/post-beta-roadmap.md).
-
 ## Safety and privacy
 
 - Only explicitly selected notes can enter an outbound payload.
@@ -171,7 +151,7 @@ Issues, logs, or generated Skills.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
-  .\dist\skill-dna-compiler-0.1.0-beta.2-windows-x64.zip `
+  .\dist\skill-dna-compiler-0.1.0-beta.3-windows-x64.zip `
   --report-dir .\build\verification\beta.2
 ```
 
@@ -189,7 +169,6 @@ the verifier itself cannot run.
 - [Architecture and safety boundaries](docs/architecture.md)
 - [Implementation plan](docs/implementation-plan.md)
 - [Beta test checklist](docs/beta-test-checklist.md)
-- [Post-Beta roadmap](docs/post-beta-roadmap.md)
 
 ## Feedback and contributions
 

@@ -29,18 +29,18 @@ def test_selected_obsidian_note_to_exported_skill():
     export_root.mkdir(parents=True, exist_ok=True)
 
     app = AppTest.from_file("app.py").run(timeout=60)
-    next(widget for widget in app.text_input if widget.label == "Vaultフォルダ").set_value(
+    next(widget for widget in app.text_input if widget.label == "Vault folder").set_value(
         str(vault)
     )
-    next(button for button in app.button if button.label == "Vaultを読み込む").click()
+    next(button for button in app.button if button.label == "Load Vault").click()
     app.run(timeout=60)
     next(
         widget
         for widget in app.multiselect
-        if widget.label == "AI分析対象候補（まだ送信されません）"
+        if widget.label == "Notes to analyze (not sent yet)"
     ).set_value([note])
     app.run(timeout=60)
-    next(button for button in app.button if button.label == "送信内容を準備する").click()
+    next(button for button in app.button if button.label == "Prepare outbound content").click()
     app.run(timeout=60)
 
     payload_text = next(code.value for code in app.code if '"documents"' in code.value)
@@ -50,50 +50,52 @@ def test_selected_obsidian_note_to_exported_skill():
     next(
         checkbox
         for checkbox in app.checkbox
-        if checkbox.label == "伏字済みの送信内容を確認しました"
+        if checkbox.label == "I reviewed the redacted outbound content"
     ).set_value(True)
     next(
         checkbox
         for checkbox in app.checkbox
-        if checkbox.label == "表示された料金目安を確認し、API料金の発生に同意します"
+        if checkbox.label
+        == "I reviewed the displayed estimate and agree to possible API charges"
     ).set_value(True)
     app.run(timeout=60)
     next(
         button
         for button in app.button
-        if button.label == "OpenAIで実抽出する（API料金が発生します）"
+        if button.label == "Extract with OpenAI (API charges may apply)"
     ).click()
     app.run(timeout=120)
 
     assert not app.exception
-    assert any("OpenAI実抽出が完了" in item.value for item in app.success)
+    assert any("OpenAI extraction completed" in item.value for item in app.success)
     usage = dict(app.session_state["actual_api_usage"])
     print("ALPHA_E2E_USAGE=" + json.dumps(usage, sort_keys=True))
 
-    next(button for button in app.button if button.label == "承認する").click()
+    next(button for button in app.button if button.label == "Approve").click()
     app.run(timeout=60)
     next(
         checkbox
         for checkbox in app.checkbox
-        if checkbox.label == "変換前後を確認し、ローカルDBへ保存します"
+        if checkbox.label
+        == "I reviewed the before-and-after content and will save it to the local database"
     ).set_value(True)
     app.run(timeout=60)
     next(
-        button for button in app.button if button.label == "Skill DNAとして保存"
+        button for button in app.button if button.label == "Save as Skill DNA"
     ).click()
     app.run(timeout=60)
 
     next(
-        widget for widget in app.text_input if widget.label == "出力先の親フォルダ"
+        widget for widget in app.text_input if widget.label == "Parent destination folder"
     ).set_value(str(export_root))
     app.run(timeout=60)
     next(
         checkbox
         for checkbox in app.checkbox
-        if checkbox.label == "出力内容と出力先を確認しました"
+        if checkbox.label == "I reviewed the complete content and destination"
     ).set_value(True)
     app.run(timeout=60)
-    next(button for button in app.button if button.label == "SKILL.mdを出力").click()
+    next(button for button in app.button if button.label == "Export `SKILL.md`").click()
     app.run(timeout=60)
 
     with sqlite3.connect(database) as connection:

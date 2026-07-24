@@ -48,6 +48,10 @@ FORBIDDEN_NAMES = {".env", ".env.local", "skill-dna.db", "skill.md"}
 FORBIDDEN_SUFFIXES = {".db", ".sqlite", ".sqlite3"}
 DEPENDENCY_LINE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*==[^\s]+$")
 CHECKSUM_LINE = re.compile(r"^([0-9A-Fa-f]{64})(?:\s+\*?(.+))?$")
+BETA_ARCHIVE_NAME = re.compile(
+    r"^skill-dna-compiler-(\d+\.\d+\.\d+)-beta\.(\d+)"
+    r"(?:-[0-9A-Za-z.-]+)?-windows-x64\.zip$"
+)
 MAX_ZIP_ENTRIES = 30_000
 MAX_UNCOMPRESSED_BYTES = 500_000_000
 MAX_MEMBER_BYTES = 100_000_000
@@ -257,13 +261,16 @@ def inspect_dependencies(archive: Path) -> Check:
         or "://" in line
         or line.lower().startswith(("-e ", "git+", "file:", "ssh:"))
     ]
-    inventory_names = {
-        re.sub(r"[-_.]+", "-", line.split("==", 1)[0]).lower()
+    inventory_versions = {
+        re.sub(r"[-_.]+", "-", name).lower(): version
         for line in lines
         if DEPENDENCY_LINE.fullmatch(line)
+        for name, version in [line.split("==", 1)]
     }
+    inventory_names = set(inventory_versions)
     manifest_packages = manifest.get("packages") if isinstance(manifest, dict) else None
     manifest_names: set[str] = set()
+    manifest_versions: dict[str, str] = {}
     manifest_invalid = not isinstance(manifest_packages, list)
     license_file_errors: list[str] = []
     allowed_external = {"skill-dna-compiler", "streamlit"}
@@ -275,15 +282,17 @@ def inspect_dependencies(archive: Path) -> Check:
                     if (
                         not isinstance(package, dict)
                         or not isinstance(package.get("name"), str)
+                        or not isinstance(package.get("version"), str)
                         or package.get("status") not in {"collected", "external"}
                         or not isinstance(package.get("files"), list)
                     ):
                         manifest_invalid = True
                         continue
-                    package_name = package["name"]
+                    package_name = re.sub(r"[-_.]+", "-", package["name"]).lower()
                     status = package["status"]
                     files = package["files"]
                     manifest_names.add(package_name)
+                    manifest_versions[package_name] = package["version"]
                     if status == "external":
                         if package_name not in allowed_external or files:
                             manifest_invalid = True
@@ -319,6 +328,20 @@ def inspect_dependencies(archive: Path) -> Check:
         manifest_invalid = True
     missing_manifest = sorted(inventory_names - manifest_names)
     unexpected_manifest = sorted(manifest_names - inventory_names)
+    version_mismatches = sorted(
+        name
+        for name in inventory_names & manifest_names
+        if inventory_versions[name] != manifest_versions.get(name)
+    )
+    expected_project_version = None
+    archive_match = BETA_ARCHIVE_NAME.fullmatch(archive.name)
+    if archive_match:
+        expected_project_version = f"{archive_match.group(1)}b{archive_match.group(2)}"
+    actual_project_version = inventory_versions.get("skill-dna-compiler")
+    project_version_mismatch = (
+        expected_project_version is not None
+        and actual_project_version != expected_project_version
+    )
     passed = (
         bool(lines)
         and len(inventory_names) == len(lines)
@@ -327,15 +350,23 @@ def inspect_dependencies(archive: Path) -> Check:
         and not manifest_invalid
         and not missing_manifest
         and not unexpected_manifest
+        and not version_mismatches
+        and not project_version_mismatch
         and not license_file_errors
     )
     detail = f"packages={len(lines)}"
     if invalid or vcs_or_urls:
         detail += f", invalid_or_external={sorted(set(invalid + vcs_or_urls))!r}"
-    if manifest_invalid or missing_manifest or unexpected_manifest:
+    if manifest_invalid or missing_manifest or unexpected_manifest or version_mismatches:
         detail += (
             f", manifest_invalid={manifest_invalid}, missing_manifest={missing_manifest!r}, "
-            f"unexpected_manifest={unexpected_manifest!r}"
+            f"unexpected_manifest={unexpected_manifest!r}, "
+            f"version_mismatches={version_mismatches!r}"
+        )
+    if project_version_mismatch:
+        detail += (
+            f", project_version={actual_project_version!r}, "
+            f"expected_from_archive={expected_project_version!r}"
         )
     if license_file_errors:
         detail += f", license_file_errors={license_file_errors[:10]!r}"

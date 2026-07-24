@@ -32,10 +32,8 @@ PUBLIC_DOCS = (
     "beta-completion-audit.md",
     "beta-quick-start.md",
     "beta-test-checklist.md",
-    "cross-session-skill-discovery-experiment.md",
     "dependency-license-audit-2026-07-22.md",
     "implementation-plan.md",
-    "post-beta-roadmap.md",
     "privacy.md",
     "public-beta-readiness-audit-2026-07-22.md",
 )

@@ -8,6 +8,11 @@ import pytest
 from tools import stage_public_repository as stager
 
 
+def test_private_strategy_documents_are_not_publicly_staged() -> None:
+    assert "cross-session-skill-discovery-experiment.md" not in stager.PUBLIC_DOCS
+    assert "post-beta-roadmap.md" not in stager.PUBLIC_DOCS
+
+
 def _minimal_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     project = tmp_path / "private-project"
     project.mkdir()

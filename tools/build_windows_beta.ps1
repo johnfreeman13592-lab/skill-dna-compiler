@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[0-9A-Za-z][0-9A-Za-z.-]{0,79}$')]
-    [string]$ArtifactLabel = "0.1.0-beta.2"
+    [string]$ArtifactLabel = "0.1.0-beta.3"
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,6 +23,33 @@ if (-not (Test-Path -LiteralPath $pythonPath -PathType Leaf)) {
 }
 if ((Test-Path -LiteralPath $archivePath) -or (Test-Path -LiteralPath $checksumPath)) {
     throw "The requested archive or checksum already exists. Use a new ArtifactLabel."
+}
+
+$sourceVersion = (& $pythonPath -c `
+    "from skill_dna_compiler import __version__; print(__version__)").Trim()
+if ($LASTEXITCODE -ne 0 -or -not $sourceVersion) {
+    throw "Could not read the source package version."
+}
+$sourceReleaseLabel = (& $pythonPath -c `
+    "from skill_dna_compiler import __release_label__; print(__release_label__)").Trim()
+if ($LASTEXITCODE -ne 0 -or -not $sourceReleaseLabel) {
+    throw "Could not read the source release label."
+}
+$installedVersion = (& $pythonPath -c `
+    "from importlib.metadata import version; print(version('skill-dna-compiler'))").Trim()
+if ($LASTEXITCODE -ne 0 -or -not $installedVersion) {
+    throw "Could not read the installed package metadata version."
+}
+if ($installedVersion -ne $sourceVersion) {
+    throw (
+        "Installed package metadata version '$installedVersion' does not match source version " +
+        "'$sourceVersion'. Refresh the editable install before packaging: " +
+        ".\.venv\Scripts\python.exe -m pip install --no-deps --no-build-isolation -e ."
+    )
+}
+$releaseStem = $sourceReleaseLabel.TrimStart("v")
+if (-not $ArtifactLabel.StartsWith($releaseStem, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "ArtifactLabel '$ArtifactLabel' does not match source release label '$sourceReleaseLabel'."
 }
 
 Push-Location $projectRoot

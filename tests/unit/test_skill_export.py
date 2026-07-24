@@ -363,24 +363,28 @@ def test_app_previews_and_explicitly_exports_skill(tmp_path, monkeypatch):
     app = AppTest.from_file("app.py").run(timeout=30)
 
     next(
-        widget for widget in app.text_input if widget.label == "出力先の親フォルダ"
+        widget for widget in app.text_input if widget.label == "Parent destination folder"
     ).set_value(str(destination))
     app.run(timeout=30)
 
     assert any(str(destination / skill.slug / "SKILL.md") in item.value for item in app.markdown)
     assert any("name: inspect-first" in item.value for item in app.code)
-    export_button = next(button for button in app.button if button.label == "SKILL.mdを出力")
+    export_button = next(
+        button for button in app.button if button.label == "Export `SKILL.md`"
+    )
     assert export_button.disabled is True
     next(
         checkbox
         for checkbox in app.checkbox
-        if checkbox.label == "出力内容と出力先を確認しました"
+        if checkbox.label == "I reviewed the complete content and destination"
     ).set_value(True)
     app.run(timeout=30)
-    next(button for button in app.button if button.label == "SKILL.mdを出力").click()
+    next(
+        button for button in app.button if button.label == "Export `SKILL.md`"
+    ).click()
     app.run(timeout=30)
 
     exported = destination / skill.slug / "SKILL.md"
     assert exported.is_file()
     assert not app.exception
-    assert any("SKILL.mdを出力しました" in item.value for item in app.success)
+    assert any("Exported `SKILL.md`" in item.value for item in app.success)

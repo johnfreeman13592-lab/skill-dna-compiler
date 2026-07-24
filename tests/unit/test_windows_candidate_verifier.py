@@ -74,6 +74,18 @@ def test_valid_candidate_passes_checksum_structure_and_dependency_checks(tmp_pat
     assert dependencies.passed
 
 
+def test_beta_archive_label_must_match_project_dependency_version(tmp_path: Path):
+    archive, _ = _candidate(tmp_path)
+    beta_archive = tmp_path / "skill-dna-compiler-0.1.0-beta.3-windows-x64.zip"
+    archive.replace(beta_archive)
+
+    check = verifier.inspect_dependencies(beta_archive)
+
+    assert not check.passed
+    assert "project_version='0.1.0b2'" in check.detail
+    assert "expected_from_archive='0.1.0b3'" in check.detail
+
+
 def test_tampered_archive_fails_sidecar_checksum(tmp_path: Path):
     archive, sidecar = _candidate(tmp_path)
     with archive.open("ab") as stream:

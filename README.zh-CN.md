@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.2"><img alt="版本" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.3"><img alt="版本" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
   <img alt="平台" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
   <a href="LICENSE"><img alt="许可证" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
   <img alt="本地优先" src="https://img.shields.io/badge/data-local--first-059669">
@@ -30,7 +30,7 @@
 ## 下载 Windows 版本
 
 > [!IMPORTANT]
-> **[下载 Skill DNA Compiler v0.1.0-beta.2 Windows 版](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.2/skill-dna-compiler-0.1.0-beta.2-windows-x64.zip)**
+> **[下载 Skill DNA Compiler v0.1.0-beta.3 Windows 版](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.3/skill-dna-compiler-0.1.0-beta.3-windows-x64.zip)**
 
 1. 右键单击下载的 ZIP 文件，然后选择 **全部解压缩（Extract All）**。
 2. 打开解压后的文件夹。请勿直接从 ZIP 文件内部运行应用。
@@ -108,25 +108,6 @@ Vault 始终以只读方式使用。笔记、候选、Skill DNA、版本历史�
 首个产品版本有意保持较小范围。同时，UI、领域逻辑、存储、安全、操作系统相关行为和 OpenAI
 集成彼此分离，以便未来增加适配器时无需重写安全规则。
 
-## 下一个实验
-
-通用 Skill 生成已经是一个竞争激烈的方向。因此，下一个核心实验不是“生成更多 Skill”，
-而是 **Cross-Session Skill Discovery**。
-
-实验会比较同一主题的两种输入：
-
-- 仅使用项目笔记；
-- 使用同一篇笔记，再加上用户明确选择的对话或操作记录。
-
-额外证据需要支持以下三种判断之一：
-
-1. 创建新的 Skill；
-2. 更新现有 Skill；
-3. 不创建 Skill，而是建议归入 `AGENTS.md`、Memory、MCP、确定性 Workflow，或不保存。
-
-详情请参阅[实验计划](docs/cross-session-skill-discovery-experiment.md)和
-[Post-Beta 路线图](docs/post-beta-roadmap.md)。
-
 ## 安全与隐私
 
 - 只有用户明确选择的笔记才可以进入外发 payload。
@@ -167,7 +148,7 @@ GitHub Issue、日志或生成的 Skill。
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
-  .\dist\skill-dna-compiler-0.1.0-beta.2-windows-x64.zip `
+  .\dist\skill-dna-compiler-0.1.0-beta.3-windows-x64.zip `
   --report-dir .\build\verification\beta.2
 ```
 
@@ -184,7 +165,6 @@ packaged import、HTTP health、进程所有权以及仅限 loopback 的监听�
 - [架构与安全边界](docs/architecture.md)
 - [实施计划](docs/implementation-plan.md)
 - [Beta 测试清单](docs/beta-test-checklist.md)
-- [Post-Beta 路线图](docs/post-beta-roadmap.md)
 
 ## 反馈与贡献
 

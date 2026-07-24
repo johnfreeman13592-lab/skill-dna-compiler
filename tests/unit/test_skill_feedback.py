@@ -129,27 +129,31 @@ def test_app_saves_feedback_without_running_extraction(tmp_path, monkeypatch):
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     app = AppTest.from_file("app.py").run(timeout=30)
 
-    next(widget for widget in app.selectbox if widget.label == "利用状況").set_value(
+    next(widget for widget in app.selectbox if widget.label == "Usage").set_value(
         SkillUsageStatus.REUSED
     )
-    next(widget for widget in app.selectbox if widget.label == "役立ち度").set_value(
+    next(widget for widget in app.selectbox if widget.label == "Usefulness").set_value(
         SkillUsefulness.HELPFUL
     )
-    next(widget for widget in app.text_area if widget.label == "良かった点（任意）").set_value(
+    next(
+        widget for widget in app.text_area if widget.label == "What worked well (optional)"
+    ).set_value(
         "Repeated setup was faster"
     )
     next(
-        widget for widget in app.text_area if widget.label == "改善したい点（任意）"
+        widget
+        for widget in app.text_area
+        if widget.label == "What should improve (optional)"
     ).set_value("Clarify one edge case")
     app.run(timeout=30)
     next(
-        button for button in app.button if button.label == "使用結果をローカル保存"
+        button for button in app.button if button.label == "Save feedback locally"
     ).click()
     app.run(timeout=30)
 
     assert not app.exception
-    assert any("使用結果をローカル保存しました" in item.value for item in app.success)
-    assert any("APIキー" in item.value for item in app.warning)
+    assert any("Saved local feedback" in item.value for item in app.success)
+    assert any("API key" in item.value for item in app.warning)
     with sqlite3.connect(database_path) as connection:
         feedback = connection.execute(
             "SELECT skill_dna_id, skill_version, usage_status, usefulness, "
