@@ -61,6 +61,10 @@ def test_app_defaults_to_english_and_switches_ui_language(tmp_path, monkeypatch)
     app.run(timeout=30)
     assert not app.exception
     assert any("1. Obsidianメモを選ぶ" in item.value for item in app.subheader)
+    assert any(
+        item.label == "任意: 初回利用のフィードバックレポートを作る"
+        for item in app.expander
+    )
 
     language = next(widget for widget in app.selectbox if widget.label == "Language")
     language.set_value("zh-CN")
