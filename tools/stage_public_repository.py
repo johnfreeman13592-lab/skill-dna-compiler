@@ -31,6 +31,7 @@ PUBLIC_DOCS = (
     "architecture.md",
     "beta-completion-audit.md",
     "beta-quick-start.md",
+    "beta-quick-start.ja.md",
     "beta-test-checklist.md",
     "dependency-license-audit-2026-07-22.md",
     "implementation-plan.md",
