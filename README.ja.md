@@ -151,7 +151,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_be
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
   .\dist\skill-dna-compiler-0.1.0-beta.3-windows-x64.zip `
-  --report-dir .\build\verification\beta.2
+  --report-dir .\build\verification\beta.3
 ```
 
 検証ツールはchecksum、ZIP制限と安全なパス、必須・禁止ファイル、依存関係とライセンス、
