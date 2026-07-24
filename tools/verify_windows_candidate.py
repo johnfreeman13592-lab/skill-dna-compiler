@@ -35,6 +35,7 @@ REQUIRED_FILES = (
     "README.txt",
     "_internal/streamlit/static/index.html",
     "docs/beta-quick-start.md",
+    "docs/beta-quick-start.ja.md",
     "docs/beta-test-checklist.md",
     "docs/privacy.md",
     "LICENSE",

@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.3"><img alt="リリース" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.4"><img alt="リリース" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
   <img alt="対応OS" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
   <a href="LICENSE"><img alt="ライセンス" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
   <img alt="ローカルファースト" src="https://img.shields.io/badge/data-local--first-059669">
@@ -30,7 +30,7 @@
 ## Windows版をダウンロード
 
 > [!IMPORTANT]
-> **[Skill DNA Compiler v0.1.0-beta.3 Windows版をダウンロード](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.3/skill-dna-compiler-0.1.0-beta.3-windows-x64.zip)**
+> **[Skill DNA Compiler v0.1.0-beta.4 Windows版をダウンロード](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.4/skill-dna-compiler-0.1.0-beta.4-windows-x64.zip)**
 
 1. ダウンロードしたZIPを右クリックし、**「すべて展開」**を選ぶ。
 2. 展開後のフォルダを開く。ZIPの中から直接起動しない。
@@ -38,7 +38,7 @@
 
 最初は同梱の`Sample Vault`と**モック抽出**を使ってください。この手順ではAPIキーが不要で、
 外部AIへ何も送信せず、料金もかかりません。SmartScreenや画面の操作順は
-[Betaクイックスタート](docs/beta-quick-start.md)で確認できます。
+[Betaクイックスタート](docs/beta-quick-start.ja.md)で確認できます。
 
 ## 何が変わるのか
 
@@ -150,8 +150,8 @@ py -3.11 -m venv .venv
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
-  .\dist\skill-dna-compiler-0.1.0-beta.3-windows-x64.zip `
-  --report-dir .\build\verification\beta.3
+  .\dist\skill-dna-compiler-0.1.0-beta.4-windows-x64.zip `
+  --report-dir .\build\verification\beta.4
 ```
 
 検証ツールはchecksum、ZIP制限と安全なパス、必須・禁止ファイル、依存関係とライセンス、
@@ -162,7 +162,7 @@ packaged import、HTTP health、プロセス所有権、loopback限定listener�
 
 ## ドキュメント
 
-- [Betaクイックスタート](docs/beta-quick-start.md)
+- [Betaクイックスタート](docs/beta-quick-start.ja.md)
 - [プライバシーとAPI送信](docs/privacy.md)
 - [アーキテクチャと安全境界](docs/architecture.md)
 - [実装計画](docs/implementation-plan.md)

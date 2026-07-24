@@ -1,104 +1,120 @@
-# Skill DNA Compiler Beta クイックスタート
+# Skill DNA Compiler Beta Quick Start
 
-## 最初の10分で試すこと
+## What to try in your first 10 minutes
 
-初回はAPIキーも実際のObsidianメモも必要ありません。次の無料コースで、アプリの全体像を
-確認してください。
+You do not need an API key or real Obsidian notes for your first run. Start with this free,
+local-only path:
 
 ```text
-ZIPを展開する
-  → EXEを起動する
-  → Sample Vaultを選ぶ
-  → モック抽出する（無料）
-  → 根拠を確認する
-  → 承認した候補をSKILL.mdへ保存する
+Extract the ZIP
+  → Launch the EXE
+  → Choose the bundled Sample Vault
+  → Run mock extraction (free)
+  → Review the source evidence
+  → Export an approved candidate as SKILL.md
 ```
 
-モック抽出では外部APIを呼ばず、料金は発生しません。有料になる可能性があるのは、実際の
-メモを選び、送信JSONと料金上限を確認し、内容と料金の2つへ同意して、料金表示付きの実抽出
-ボタンを押した場合だけです。
+Mock extraction does not call an external API and cannot incur an API charge. A paid action is
+possible only if you later select real notes, review the exact outbound JSON and cost ceiling,
+confirm both the content and possible charge, and press the live-extraction button that displays
+the estimate.
 
-画面で迷った場合は、次の意味で読み替えてください。
+These terms may help while you explore:
 
-- `Vault`：Obsidianのメモが入ったフォルダ
-- `候補`：別の作業でも使えそうな手順やルール
-- `根拠の確認`：候補が元メモに本当に書かれているか確かめる工程
-- `Skill DNA`：承認した候補を版と根拠付きで保存したもの
-- `SKILL.md`：Codexで利用する最終ファイル
+- `Vault`: a folder containing Obsidian Markdown notes
+- `Candidate`: a reusable instruction or rule found in selected notes
+- `Evidence review`: checking that a candidate is actually supported by the source note
+- `Skill DNA`: an approved candidate saved with a version and its evidence
+- `SKILL.md`: the final file that Codex can use
 
-## 1. 起動
+日本語版は[Betaクイックスタート](beta-quick-start.ja.md)を参照してください。
 
-1. ZIPを右クリックして「すべて展開」を選びます。
-2. 展開した`Skill DNA Compiler`フォルダを開きます。
-3. `Skill DNA Compiler.exe`をダブルクリックします。
-4. 黒い起動ウィンドウを閉じず、ブラウザーに表示された画面を使います。
-5. 終了するときは黒い起動ウィンドウを閉じます。
+## 1. Launch
 
-Pythonのインストールは不要です。アプリはPC外部へ画面を公開せず、`127.0.0.1`だけで動作します。
+1. Right-click the ZIP and select **Extract All**.
+2. Open the extracted `Skill DNA Compiler` folder.
+3. Double-click `Skill DNA Compiler.exe`.
+4. Keep the black launcher window open and use the page that appears in your browser.
+5. Close the black launcher window when you want to stop the app.
 
-未署名Betaのため、Windows SmartScreenが警告する場合があります。入手したZIPのSHA-256が
-同梱の`.sha256`ファイルと一致することを確認し、配布元が案内した正式なBeta成果物である場合だけ実行してください。
+Python is not required. The app binds its page only to `127.0.0.1`, not to an external network
+interface.
 
-## 2. OpenAI APIキー
+Because this early Beta is unsigned, Windows SmartScreen may show a warning. Continue only when
+the ZIP came from the official Release page and its SHA-256 matches the published `.sha256` file.
+Do not disable a security product or add an antivirus exclusion just to run the Beta.
 
-1. 「OpenAI APIキー設定」を開きます。
-2. APIキーをパスワード欄へ入力します。
-3. 「Windows資格情報ストアへ保存」を押します。
+## 2. Free Sample Vault flow
 
-保存だけではAPI通信や料金は発生しません。キーはWindows Credential Managerへ保存され、
-Skill DNA CompilerのSQLite、ログ、生成Skillには保存されません。キーをメモ、Issue、チャット、
-スクリーンショットへ貼り付けないでください。
+1. Press **Use bundled Sample Vault**.
+2. Press **Load Vault**.
+3. Select the sample notes and press **Prepare outbound content**.
+4. Review the redacted JSON and confirm that you reviewed it.
+5. Press **Run mock extraction**. Do not press a live-extraction button.
+6. Open a candidate and review whether each instruction is supported by the shown evidence.
+7. Approve only the candidate and instruction traces you actually reviewed.
+8. Save the approved candidate as Skill DNA.
+9. Choose an empty test folder, preview the complete output, and export `SKILL.md`.
 
-削除するときは「保存済みAPIキーを削除することを確認しました」を選び、削除ボタンを押します。
-資格情報ストアが利用できない場合、アプリは安全のため平文ファイルへ代替保存しません。
+The mock path makes no OpenAI API request and costs nothing. For the first run, prioritize
+checking whether the evidence supports each instruction instead of trying to perfect every word.
+If the evidence is insufficient, leave the instruction pending or reject it.
 
-## 3. 無料のサンプル確認
+## 3. Optional OpenAI API key for a later live extraction
 
-1. `Sample Vault`フォルダをVaultとして指定します。
-2. 「Vaultを読み込む」を押します。
-3. 対象メモを選び、「送信内容を準備する」を押します。
-4. 送信JSONを確認し、「モック抽出を実行する」を使います。
-5. 候補をレビューして承認し、Skill DNAへ変換します。
-6. 出力先と全文を確認し、`SKILL.md`を出力します。
+Skip this section during the free Sample Vault flow.
 
-モック抽出はOpenAI APIを呼ばないため料金はかかりません。
+1. Open **OpenAI API key settings**.
+2. Enter the key in the password field.
+3. Press **Save to Windows Credential Manager**.
 
-初回は候補の文章を完璧に直すことより、「元メモの引用が指示を支えているか」を確認することを
-優先してください。根拠が足りない場合は承認せず、保留または却下できます。
+Saving a key does not make an API request or create a charge. The packaged app stores it in
+Windows Credential Manager, not in Skill DNA Compiler's SQLite database, logs, or generated
+Skills. Never paste an API key into a note, Issue, chat, or screenshot.
 
-## 4. 実際のメモを使う
+To remove it, select the deletion confirmation and press the delete button. If the credential
+backend is unavailable, the app fails closed and does not fall back to plaintext storage.
 
-1. Obsidian Vaultのパスを入力し、読み込みます。
-2. AIへ送ってよいメモだけを明示選択します。
-3. 伏字済み送信JSON、文字数、料金上限を確認します。
-4. 2つの確認欄を選び、料金表示付きの実抽出ボタンを押します。
-5. 出典と内容を人間が確認し、必要な候補だけを承認します。
+## 4. Optional real-note flow
 
-選択していないメモは送信されません。自動検出は完全ではないため、送信JSONの目視確認を省略しないでください。
+Do not use this section in the first-use Sample Vault study.
 
-## 5. データとアンインストール
+1. Enter and load your Obsidian Vault path.
+2. Explicitly select only notes that may be sent to the external AI.
+3. Review the redacted outbound JSON, character count, and cost ceiling.
+4. Select both confirmation boxes and press the live-extraction button showing the estimate.
+5. Review the source and content, then approve only the candidates you want.
 
-- アプリ本体：ZIPを展開したフォルダ
-- ローカルDB：`%LOCALAPPDATA%\SkillDNACompiler\SkillDNACompiler\skill-dna.db`
-- DBバックアップ：DB隣の`skill-dna.db.backups`フォルダ
-- APIキー：Windows Credential Manager
+Unselected notes are not sent. Sensitive-data detection is not a guarantee, so never skip the
+exact outbound JSON review.
 
-アプリ本体だけを消してもDBとAPIキーは残ります。完全に削除する場合は、最初にアプリ画面から
-APIキーを削除し、必要なDBバックアップを取った後で、アプリ本体と上記ユーザーデータフォルダを削除します。
+## 5. Data and uninstall
 
-## 6. 既知の制限
+- App files: the extracted ZIP folder
+- Local database:
+  `%LOCALAPPDATA%\SkillDNACompiler\SkillDNACompiler\skill-dna.db`
+- Database backups: the `skill-dna.db.backups` folder beside the database
+- API key, if saved: Windows Credential Manager
 
-- Windows 10/11 x64限定です。
-- コード署名とインストーラーはありません。
-- 開発途中のBeta版です。重要なデータは別途バックアップしてください。
-- ブラウザーを閉じても起動ウィンドウを閉じるまでローカル処理は終了しません。
-- 自動テレメトリーやクラウド同期はありません。
+Deleting only the extracted app folder does not remove the database or a saved API key. For a
+complete removal, first delete the API key from the app, preserve any backup you need, and then
+remove the extracted app folder and the user-data folder above.
 
-## 7. 困ったとき
+## 6. Known limitations
 
-- ブラウザーが開かない：黒い起動ウィンドウを閉じず、表示された`127.0.0.1`のURLをブラウザーへ入力します。
-- 2回目を起動できない：すでに開いている黒い起動ウィンドウとブラウザー画面を使います。
-- APIキーをまだ持っていない：サンプルとモック抽出はAPIキーなしで利用できます。
-- 料金が心配：料金表示のないモック抽出だけを使います。実抽出ボタンを押さなければAPI料金は発生しません。
-- メモ選びに迷う：秘密、個人情報、顧客情報を含まず、自分で内容を説明できる短いメモ1件から始めます。
-- SmartScreenやウイルス対策ソフトが止めた：除外や許可を急がず、SHA-256と入手元を再確認します。
+- Windows 10/11 x64 only
+- No code signature or installer
+- Early Beta software; keep separate backups of important data
+- Closing only the browser tab does not stop the local process
+- No automatic telemetry or cloud synchronization
+
+## 7. Troubleshooting
+
+- Browser did not open: keep the black launcher window open and enter its `127.0.0.1` URL in your
+  browser.
+- A second launch does not open: use the already-running launcher window and browser page.
+- No API key: the Sample Vault and mock extraction work without one.
+- Concerned about charges: use only **Run mock extraction**. Do not press a live-extraction button.
+- Unsure which notes to use: stay with the bundled Sample Vault for the first run.
+- SmartScreen or antivirus stopped the app: do not rush to bypass it. Recheck the official source
+  and SHA-256, and stop if you remain uncertain.

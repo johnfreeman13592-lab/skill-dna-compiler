@@ -37,6 +37,7 @@ def _candidate(
         "README.txt": b"quick start",
         "_internal/streamlit/static/index.html": b"<!doctype html>",
         "docs/beta-quick-start.md": b"quick start",
+        "docs/beta-quick-start.ja.md": b"japanese quick start",
         "docs/beta-test-checklist.md": b"checklist",
         "docs/privacy.md": b"privacy",
         "LICENSE": b"MPL-2.0",

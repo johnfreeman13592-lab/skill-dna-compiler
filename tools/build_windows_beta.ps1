@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[0-9A-Za-z][0-9A-Za-z.-]{0,79}$')]
-    [string]$ArtifactLabel = "0.1.0-beta.3"
+    [string]$ArtifactLabel = "0.1.0-beta.4"
 )
 
 $ErrorActionPreference = "Stop"
@@ -105,6 +105,7 @@ try {
     $docsPath = Join-Path $bundlePath "docs"
     New-Item -ItemType Directory -Path $docsPath -Force | Out-Null
     Copy-Item -LiteralPath "docs\beta-quick-start.md" -Destination $docsPath
+    Copy-Item -LiteralPath "docs\beta-quick-start.ja.md" -Destination $docsPath
     Copy-Item -LiteralPath "docs\beta-test-checklist.md" -Destination $docsPath
     Copy-Item -LiteralPath "docs\privacy.md" -Destination $docsPath
     Copy-Item -LiteralPath "docs\beta-quick-start.md" `
