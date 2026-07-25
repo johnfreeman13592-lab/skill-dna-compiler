@@ -28,3 +28,9 @@ def test_every_ui_entry_has_all_supported_languages_and_matching_placeholders():
 def test_unknown_ui_translation_fails_closed():
     with pytest.raises(KeyError, match="Unknown UI translation"):
         text("en", "missing.key")
+
+
+def test_new_first_use_feedback_ui_uses_english_fallback_for_chinese():
+    assert text("zh-CN", "first_feedback.title") == TEXT["first_feedback.title"]["en"]
+    assert text("ja", "first_feedback.title") == TEXT["first_feedback.title"]["ja"]
+    assert text("zh-CN", "hero.copy") == TEXT["hero.copy"]["zh-CN"]

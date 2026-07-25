@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.4"><img alt="版本" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.5"><img alt="版本" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
   <img alt="平台" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
   <a href="LICENSE"><img alt="许可证" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
   <img alt="本地优先" src="https://img.shields.io/badge/data-local--first-059669">
@@ -30,7 +30,7 @@
 ## 下载 Windows 版本
 
 > [!IMPORTANT]
-> **[下载 Skill DNA Compiler v0.1.0-beta.4 Windows 版](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.4/skill-dna-compiler-0.1.0-beta.4-windows-x64.zip)**
+> **[下载 Skill DNA Compiler v0.1.0-beta.5 Windows 版](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.5/skill-dna-compiler-0.1.0-beta.5-windows-x64.zip)**
 
 1. 右键单击下载的 ZIP 文件，然后选择 **全部解压缩（Extract All）**。
 2. 打开解压后的文件夹。请勿直接从 ZIP 文件内部运行应用。
@@ -148,8 +148,8 @@ GitHub Issue、日志或生成的 Skill。
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
-  .\dist\skill-dna-compiler-0.1.0-beta.4-windows-x64.zip `
-  --report-dir .\build\verification\beta.4
+  .\dist\skill-dna-compiler-0.1.0-beta.5-windows-x64.zip `
+  --report-dir .\build\verification\beta.5
 ```
 
 验证工具会检查 checksum、压缩包限制和安全路径、必需与禁止文件、依赖来源和许可证、

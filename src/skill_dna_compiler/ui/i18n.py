@@ -14,6 +14,7 @@ LANGUAGE_LABELS: dict[Language, str] = {
     "ja": "日本語",
     "zh-CN": "简体中文",
 }
+ENGLISH_FALLBACK_PREFIXES = ("first_feedback.",)
 
 
 def _entry(en: str, ja: str, zh_cn: str) -> dict[Language, str]:
@@ -1071,6 +1072,242 @@ If you are unsure, leave it **on hold**. Unreviewed rules are not exported.
         "出力履歴: {history}",
         "导出历史：{history}",
     ),
+    "first_feedback.title": _entry(
+        "Optional: Prepare a first-use feedback report",
+        "任意: 初回利用のフィードバックレポートを作る",
+        "可选：准备首次使用反馈报告",
+    ),
+    "first_feedback.caption": _entry(
+        "Use this at any time, including if you get stuck. The preview is generated locally and is not saved or sent automatically.",
+        "途中で止まった場合も、いつでも使えます。プレビューはローカルで作られ、自動保存・自動送信されません。",
+        "即使遇到困难，也可随时使用。预览在本地生成，不会自动保存或发送。",
+    ),
+    "first_feedback.outcome": _entry(
+        "Current outcome",
+        "現在の結果",
+        "当前结果",
+    ),
+    "first_feedback.outcome.exploring": _entry(
+        "Still exploring",
+        "まだ試している",
+        "仍在体验",
+    ),
+    "first_feedback.outcome.completed": _entry(
+        "Completed what I wanted to try",
+        "試したかったところまで完了した",
+        "已完成想尝试的内容",
+    ),
+    "first_feedback.outcome.stopped": _entry(
+        "Stopped because I was stuck or concerned",
+        "迷った、または不安だったため中止した",
+        "因遇到困难或感到担忧而停止",
+    ),
+    "first_feedback.step": _entry(
+        "Furthest step reached",
+        "到達した最後のステップ",
+        "到达的最远步骤",
+    ),
+    "first_feedback.step.opened": _entry(
+        "Opened the app",
+        "アプリを開いた",
+        "已打开应用",
+    ),
+    "first_feedback.step.sample": _entry(
+        "Loaded the Sample Vault",
+        "Sample Vaultを読み込んだ",
+        "已加载 Sample Vault",
+    ),
+    "first_feedback.step.mock": _entry(
+        "Ran mock extraction",
+        "モック抽出を実行した",
+        "已运行模拟提取",
+    ),
+    "first_feedback.step.evidence": _entry(
+        "Reviewed a candidate and its evidence",
+        "候補と根拠を確認した",
+        "已审核候选项及其证据",
+    ),
+    "first_feedback.step.approval": _entry(
+        "Approved and saved Skill DNA",
+        "承認してSkill DNAを保存した",
+        "已批准并保存 Skill DNA",
+    ),
+    "first_feedback.step.export": _entry(
+        "Exported `SKILL.md`",
+        "`SKILL.md`を出力した",
+        "已导出 `SKILL.md`",
+    ),
+    "first_feedback.difficulty": _entry(
+        "Main difficulty",
+        "一番の難しさ",
+        "主要困难",
+    ),
+    "first_feedback.difficulty.none": _entry(
+        "No major difficulty",
+        "大きな問題はなかった",
+        "没有明显困难",
+    ),
+    "first_feedback.difficulty.trust": _entry(
+        "Trust or security concern",
+        "信頼性・セキュリティへの不安",
+        "信任或安全方面的担忧",
+    ),
+    "first_feedback.difficulty.purpose": _entry(
+        "Understanding what the product is for",
+        "製品の目的を理解すること",
+        "理解产品用途",
+    ),
+    "first_feedback.difficulty.launch": _entry(
+        "Download or launch",
+        "ダウンロード・起動",
+        "下载或启动",
+    ),
+    "first_feedback.difficulty.sample": _entry(
+        "Sample Vault or note selection",
+        "Sample Vault・メモ選択",
+        "Sample Vault 或笔记选择",
+    ),
+    "first_feedback.difficulty.extraction": _entry(
+        "Mock extraction or payload",
+        "モック抽出・Payload",
+        "模拟提取或 Payload",
+    ),
+    "first_feedback.difficulty.evidence": _entry(
+        "Candidate review or DNA Trace",
+        "候補レビュー・DNA Trace",
+        "候选项审核或 DNA Trace",
+    ),
+    "first_feedback.difficulty.approval_export": _entry(
+        "Approval, Skill DNA, or export",
+        "承認・Skill DNA・出力",
+        "批准、Skill DNA 或导出",
+    ),
+    "first_feedback.difficulty.error_other": _entry(
+        "Error or something else",
+        "エラー・その他",
+        "错误或其他问题",
+    ),
+    "first_feedback.reuse": _entry(
+        "Would you use Skill DNA Compiler again?",
+        "Skill DNA Compilerをまた使いたいですか？",
+        "你愿意再次使用 Skill DNA Compiler 吗？",
+    ),
+    "first_feedback.reuse.unsure": _entry("Unsure", "まだ分からない", "不确定"),
+    "first_feedback.reuse.yes": _entry("Yes", "はい", "是"),
+    "first_feedback.reuse.maybe": _entry("Maybe", "たぶん", "也许"),
+    "first_feedback.reuse.no": _entry("No", "いいえ", "否"),
+    "first_feedback.worked": _entry(
+        "What worked well? (optional)",
+        "良かった点は何ですか？（任意）",
+        "哪些方面做得好？（可选）",
+    ),
+    "first_feedback.blocked": _entry(
+        "What was unclear, what happened, and what did you expect? (optional)",
+        "何が分かりにくく、何が起き、どうなると思いましたか？（任意）",
+        "哪些地方不清楚、发生了什么、你原本期待什么？（可选）",
+    ),
+    "first_feedback.repeated": _entry(
+        "What explanation or correction do you repeatedly give AI? Use a non-confidential example. (optional)",
+        "AIへ繰り返している説明・訂正は何ですか？ 機密を含まない例にしてください。（任意）",
+        "你经常向 AI 重复哪些说明或纠正？请使用不含机密信息的例子。（可选）",
+    ),
+    "first_feedback.safety": _entry(
+        "Do not enter note bodies, Vault or file paths, API keys, passwords, contact details, or other personal or confidential information.",
+        "メモ本文、Vaultやファイルのパス、APIキー、パスワード、連絡先などの個人情報・機密情報は入力しないでください。",
+        "请勿输入笔记正文、Vault 或文件路径、API 密钥、密码、联系方式或其他个人及机密信息。",
+    ),
+    "first_feedback.redacted": _entry(
+        "The local safety scan redacted {count} sensitive-looking item(s). Review the replacements in the preview.",
+        "ローカル安全検査が機密の可能性がある項目を{count}件伏字にしました。プレビューで置換箇所を確認してください。",
+        "本地安全扫描已遮盖 {count} 个可能敏感的项目。请在预览中检查替换内容。",
+    ),
+    "first_feedback.preview": _entry(
+        "Complete report preview",
+        "レポート全文プレビュー",
+        "完整报告预览",
+    ),
+    "first_feedback.confirm": _entry(
+        "I reviewed the complete report and confirmed it contains no note bodies, paths, credentials, personal information, or confidential content",
+        "レポート全文を確認し、メモ本文・パス・資格情報・個人情報・機密情報が含まれないことを確認しました",
+        "我已检查完整报告，并确认其中不含笔记正文、路径、凭据、个人信息或机密内容",
+    ),
+    "first_feedback.download": _entry(
+        "Download feedback report (`.md`)",
+        "フィードバックレポートをダウンロード（`.md`）",
+        "下载反馈报告（`.md`）",
+    ),
+    "first_feedback.manual": _entry(
+        "Downloading writes the reviewed file through your browser. It does not send it anywhere. You choose whether and how to share it.",
+        "ダウンロードすると、確認済みファイルをブラウザ経由で保存します。外部送信は行いません。共有するか、どの方法で共有するかは自分で選べます。",
+        "下载会通过浏览器保存已审核的文件，不会发送到任何地方。是否以及如何分享由你决定。",
+    ),
+    "first_feedback.report.title": _entry(
+        "Skill DNA Compiler first-use feedback",
+        "Skill DNA Compiler 初回利用フィードバック",
+        "Skill DNA Compiler 首次使用反馈",
+    ),
+    "first_feedback.report.version": _entry(
+        "App version",
+        "アプリ版",
+        "应用版本",
+    ),
+    "first_feedback.report.language": _entry(
+        "UI language",
+        "UI言語",
+        "界面语言",
+    ),
+    "first_feedback.report.automatic": _entry(
+        "Automatic collection or sending",
+        "自動収集・自動送信",
+        "自动收集或发送",
+    ),
+    "first_feedback.report.none": _entry("None", "なし", "无"),
+    "first_feedback.report.outcome": _entry("Outcome", "結果", "结果"),
+    "first_feedback.report.step": _entry(
+        "Furthest step reached",
+        "到達した最後のステップ",
+        "到达的最远步骤",
+    ),
+    "first_feedback.report.difficulty": _entry(
+        "Main difficulty",
+        "一番の難しさ",
+        "主要困难",
+    ),
+    "first_feedback.report.reuse": _entry(
+        "Would use again",
+        "再利用したいか",
+        "是否愿意再次使用",
+    ),
+    "first_feedback.report.worked": _entry(
+        "What worked well",
+        "良かった点",
+        "做得好的方面",
+    ),
+    "first_feedback.report.blocked": _entry(
+        "What was unclear or unexpected",
+        "分かりにくかった・予想外だった点",
+        "不清楚或出乎预期的方面",
+    ),
+    "first_feedback.report.repeated": _entry(
+        "Repeated explanation or correction",
+        "繰り返している説明・訂正",
+        "重复的说明或纠正",
+    ),
+    "first_feedback.report.not_provided": _entry(
+        "Not provided",
+        "記入なし",
+        "未填写",
+    ),
+    "first_feedback.report.privacy_title": _entry(
+        "Privacy statement",
+        "プライバシー説明",
+        "隐私说明",
+    ),
+    "first_feedback.report.privacy_body": _entry(
+        "This report was generated locally from answers shown in the preview. The app did not automatically add Vault data, note content, file paths, API-key state, database identifiers, logs, or account information, and did not send this report.",
+        "このレポートは、プレビューに表示された回答だけからローカルで作られました。アプリはVault情報、メモ本文、ファイルパス、APIキー状態、DB識別子、ログ、アカウント情報を自動追加しておらず、このレポートを送信していません。",
+        "此报告仅根据预览中显示的回答在本地生成。应用未自动添加 Vault 数据、笔记内容、文件路径、API 密钥状态、数据库标识符、日志或账户信息，也未发送此报告。",
+    ),
     "feedback.title": _entry(
         "Optional: Record how a generated Skill performed",
         "任意: 生成Skillの使用結果を記録する",
@@ -1232,8 +1469,13 @@ If you are unsure, leave it **on hold**. Unreviewed rules are not exported.
 def text(language: Language, key: str, **values: object) -> str:
     """Return one translated UI string and interpolate named values."""
 
+    effective_language = (
+        "en"
+        if language == "zh-CN" and key.startswith(ENGLISH_FALLBACK_PREFIXES)
+        else language
+    )
     try:
-        template = TEXT[key][language]
+        template = TEXT[key][effective_language]
     except KeyError as exc:
         raise KeyError(f"Unknown UI translation: {key!r} ({language!r})") from exc
     return template.format(**values)

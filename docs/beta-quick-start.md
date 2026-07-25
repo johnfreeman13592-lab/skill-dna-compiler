@@ -60,6 +60,24 @@ The mock path makes no OpenAI API request and costs nothing. For the first run, 
 checking whether the evidence supports each instruction instead of trying to perfect every word.
 If the evidence is insufficient, leave the instruction pending or reject it.
 
+### Optional first-use feedback report
+
+Near the top of the app, open **Optional: Prepare a first-use feedback report** at any time,
+including if you stop before finishing the Sample Vault flow.
+
+1. Choose the outcome, furthest step, main difficulty, and whether you would use the app again.
+2. Add only non-confidential comments. Do not paste note bodies, file paths, credentials, contact
+   details, or personal information.
+3. Review the complete Markdown preview. The local safety scan replaces common
+   sensitive-looking values, but it cannot guarantee that every confidential detail was found.
+4. Select the confirmation only after reviewing the updated preview.
+5. Download the `.md` report through your browser.
+
+The app automatically adds only its version and the selected UI language. It does not add Vault
+data, note content, paths, API-key state, database identifiers, logs, or account information. The
+report is not saved to the app database and is not sent anywhere. You decide whether and how to
+share the reviewed file.
+
 ## 3. Optional OpenAI API key for a later live extraction
 
 Skip this section during the free Sample Vault flow.

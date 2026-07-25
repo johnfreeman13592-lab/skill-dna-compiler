@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import sys
 from datetime import UTC, datetime
@@ -62,7 +63,9 @@ from skill_dna_compiler.storage.repositories import (
 from skill_dna_compiler.ui import (
     DEFAULT_LANGUAGE,
     LANGUAGE_LABELS,
+    MAX_FEEDBACK_FIELD_CHARS,
     Language,
+    build_first_use_feedback_report,
     inject_theme,
     render_hero,
     render_local_safety_sidebar,
@@ -97,6 +100,125 @@ def _bundled_sample_vault() -> Path | None:
         candidate = Path(__file__).resolve().parent / "tests" / "fixtures" / "sample_vault"
     resolved = candidate.resolve()
     return resolved if resolved.is_dir() else None
+
+
+def _render_first_use_feedback() -> None:
+    with st.expander(_t("first_feedback.title"), expanded=False):
+        st.caption(_t("first_feedback.caption"))
+        outcome_labels = {
+            value: _t(f"first_feedback.outcome.{value}")
+            for value in ("exploring", "completed", "stopped")
+        }
+        outcome = st.selectbox(
+            _t("first_feedback.outcome"),
+            list(outcome_labels),
+            format_func=outcome_labels.get,
+            key="first_feedback_outcome",
+        )
+        step_labels = {
+            value: _t(f"first_feedback.step.{value}")
+            for value in (
+                "opened",
+                "sample",
+                "mock",
+                "evidence",
+                "approval",
+                "export",
+            )
+        }
+        furthest_step = st.selectbox(
+            _t("first_feedback.step"),
+            list(step_labels),
+            format_func=step_labels.get,
+            key="first_feedback_step",
+        )
+        difficulty_labels = {
+            value: _t(f"first_feedback.difficulty.{value}")
+            for value in (
+                "none",
+                "trust",
+                "purpose",
+                "launch",
+                "sample",
+                "extraction",
+                "evidence",
+                "approval_export",
+                "error_other",
+            )
+        }
+        main_difficulty = st.selectbox(
+            _t("first_feedback.difficulty"),
+            list(difficulty_labels),
+            format_func=difficulty_labels.get,
+            key="first_feedback_difficulty",
+        )
+        reuse_labels = {
+            value: _t(f"first_feedback.reuse.{value}")
+            for value in ("unsure", "yes", "maybe", "no")
+        }
+        reuse_intent = st.selectbox(
+            _t("first_feedback.reuse"),
+            list(reuse_labels),
+            format_func=reuse_labels.get,
+            key="first_feedback_reuse",
+        )
+        worked_well = st.text_area(
+            _t("first_feedback.worked"),
+            max_chars=MAX_FEEDBACK_FIELD_CHARS,
+            key="first_feedback_worked",
+        )
+        blocked_or_unclear = st.text_area(
+            _t("first_feedback.blocked"),
+            max_chars=MAX_FEEDBACK_FIELD_CHARS,
+            key="first_feedback_blocked",
+        )
+        repeated_correction = st.text_area(
+            _t("first_feedback.repeated"),
+            max_chars=MAX_FEEDBACK_FIELD_CHARS,
+            key="first_feedback_repeated",
+        )
+        st.warning(_t("first_feedback.safety"))
+
+        language = _language()
+        report = build_first_use_feedback_report(
+            release_label=__release_label__,
+            language=language,
+            language_label=LANGUAGE_LABELS[language],
+            outcome=outcome_labels[outcome],
+            furthest_step=step_labels[furthest_step],
+            main_difficulty=difficulty_labels[main_difficulty],
+            reuse_intent=reuse_labels[reuse_intent],
+            worked_well=worked_well,
+            blocked_or_unclear=blocked_or_unclear,
+            repeated_correction=repeated_correction,
+        )
+        if report.findings:
+            st.warning(
+                _t(
+                    "first_feedback.redacted",
+                    count=len(report.findings),
+                )
+            )
+        st.markdown(f"**{_t('first_feedback.preview')}**")
+        st.code(report.markdown, language="markdown", wrap_lines=True)
+
+        signature = hashlib.sha256(report.markdown.encode("utf-8")).hexdigest()
+        if st.session_state.get("first_feedback_signature") != signature:
+            st.session_state["first_feedback_signature"] = signature
+            st.session_state["first_feedback_confirmed"] = False
+        confirmed = st.checkbox(
+            _t("first_feedback.confirm"),
+            key="first_feedback_confirmed",
+        )
+        st.download_button(
+            _t("first_feedback.download"),
+            data=report.markdown.encode("utf-8"),
+            file_name=f"skill-dna-compiler-{__release_label__}-first-use-feedback.md",
+            mime="text/markdown",
+            disabled=not confirmed,
+            key="download_first_feedback",
+        )
+        st.caption(_t("first_feedback.manual"))
 
 
 def _render_extraction_result(
@@ -1350,6 +1472,8 @@ def main() -> None:
 
     st.subheader(_t("local_first.title"))
     st.markdown(_t("local_first.body"))
+
+    _render_first_use_feedback()
 
     with st.container(border=True):
         _render_api_key_settings(settings, openai_api_key, credential_error)
