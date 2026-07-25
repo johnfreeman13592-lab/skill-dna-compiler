@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from tools import stage_public_repository as stager
 
@@ -11,6 +12,21 @@ from tools import stage_public_repository as stager
 def test_private_strategy_documents_are_not_publicly_staged() -> None:
     assert "cross-session-skill-discovery-experiment.md" not in stager.PUBLIC_DOCS
     assert "post-beta-roadmap.md" not in stager.PUBLIC_DOCS
+
+
+def test_public_bug_report_version_prompt_is_release_independent() -> None:
+    project = Path(__file__).resolve().parents[2]
+    issue_form = yaml.safe_load(
+        (project / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml").read_text(
+            encoding="utf-8"
+        )
+    )
+    version_input = next(item for item in issue_form["body"] if item.get("id") == "version")
+
+    assert version_input["attributes"]["placeholder"] == (
+        "Enter your installed Skill DNA Compiler version"
+    )
+    assert version_input["validations"]["required"] is True
 
 
 def _minimal_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
