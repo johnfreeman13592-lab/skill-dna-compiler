@@ -25,6 +25,24 @@ class ExtractionService:
         model: str,
         prompt_version: str,
     ) -> ExtractionResult:
+        _, result = self.run_with_id(
+            payload=payload,
+            provider=provider,
+            model=model,
+            prompt_version=prompt_version,
+        )
+        return result
+
+    def run_with_id(
+        self,
+        *,
+        payload: ExtractionPayload,
+        provider: SkillExtractionProvider,
+        model: str,
+        prompt_version: str,
+    ) -> tuple[str, ExtractionResult]:
+        """Run one extraction and return its exact persisted run identity."""
+
         run_id = self._repository.start_run(model=model, prompt_version=prompt_version)
         try:
             result = provider.extract(payload)
@@ -42,4 +60,4 @@ class ExtractionService:
             self._repository.fail_run(run_id, safe_message=safe_message)
             raise ExtractionProviderError(safe_message, retryable=True) from exc
 
-        return result
+        return run_id, result

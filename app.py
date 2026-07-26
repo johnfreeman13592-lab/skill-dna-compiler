@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import os
 import sys
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 
 import streamlit as st
@@ -56,6 +58,7 @@ from skill_dna_compiler.storage.database import Database
 from skill_dna_compiler.storage.repositories import (
     ExportRepository,
     ExtractionRepository,
+    SavedCandidate,
     SkillDNARepository,
     SkillFeedbackRepository,
     VaultRepository,
@@ -66,10 +69,9 @@ from skill_dna_compiler.ui import (
     MAX_FEEDBACK_FIELD_CHARS,
     Language,
     build_first_use_feedback_report,
+    build_guided_walkthrough_data_uri,
     inject_theme,
-    render_hero,
     render_local_safety_sidebar,
-    render_workflow,
     text,
 )
 from skill_dna_compiler.vault import (
@@ -88,6 +90,240 @@ def _language() -> Language:
 
 def _t(key: str, **values: object) -> str:
     return text(_language(), key, **values)
+
+
+class GuidedView(StrEnum):
+    HOME = "home"
+    NOTES = "notes"
+    DATA = "data"
+    REVIEW = "review"
+    SAVE = "save"
+    SETTINGS = "settings"
+
+
+class GuidedJourneySource(StrEnum):
+    EXTRACTION = "extraction"
+    HISTORY = "history"
+
+
+@dataclass(frozen=True)
+class GuidedEligibility:
+    notes_selected: bool = False
+    draft_available: bool = False
+    approved_candidate: bool = False
+
+
+_GUIDED_STEPS = (
+    GuidedView.NOTES,
+    GuidedView.DATA,
+    GuidedView.REVIEW,
+    GuidedView.SAVE,
+)
+
+
+def guided_view_is_eligible(
+    view: GuidedView,
+    eligibility: GuidedEligibility,
+) -> bool:
+    """Return whether the current repository/session facts allow one view."""
+
+    if view in {GuidedView.HOME, GuidedView.NOTES, GuidedView.SETTINGS}:
+        return True
+    if view is GuidedView.DATA:
+        return eligibility.notes_selected
+    if view is GuidedView.REVIEW:
+        return eligibility.draft_available
+    return eligibility.approved_candidate
+
+
+def resolve_guided_view(
+    requested: str | GuidedView,
+    eligibility: GuidedEligibility,
+) -> GuidedView:
+    """Fail stale or malformed navigation back to the nearest safe view."""
+
+    try:
+        view = GuidedView(requested)
+    except ValueError:
+        return GuidedView.HOME
+    if guided_view_is_eligible(view, eligibility):
+        return view
+    if view not in _GUIDED_STEPS:
+        return GuidedView.HOME
+    requested_index = _GUIDED_STEPS.index(view)
+    for fallback in reversed(_GUIDED_STEPS[:requested_index]):
+        if guided_view_is_eligible(fallback, eligibility):
+            return fallback
+    return GuidedView.NOTES
+
+
+def note_selection_is_current(
+    files: list[VaultFile],
+    selected_paths: list[str],
+    vault_id: object | None,
+) -> bool:
+    """Treat widget state as current only while it belongs to the loaded Vault."""
+
+    available = {item.relative_path for item in files}
+    return bool(vault_id and selected_paths and set(selected_paths).issubset(available))
+
+
+_CURRENT_JOURNEY_KEYS = (
+    "current_journey_source",
+    "current_run_id",
+    "current_candidate_ids",
+    "current_approved_candidate_id",
+    "current_payload_fingerprint",
+    "current_provider_kind",
+    "current_provider_model",
+    "current_prompt_version",
+    "history_resume_candidate_id",
+)
+_DOWNSTREAM_CONFIRMATION_PREFIXES = (
+    "confirm_skill_dna_",
+    "confirm_export_preview_",
+    "confirm_export_overwrite_",
+)
+
+
+def prepared_payload_fingerprint(prepared: PreparedPayload) -> str:
+    """Return a non-secret identity for the exact redacted payload."""
+
+    return hashlib.sha256(prepared.serialized_json.encode("utf-8")).hexdigest()
+
+
+def _clear_session_prefixes(prefixes: tuple[str, ...]) -> None:
+    for key in list(st.session_state):
+        if key.startswith(prefixes):
+            st.session_state.pop(key, None)
+
+
+def _invalidate_current_approval() -> None:
+    st.session_state.pop("current_approved_candidate_id", None)
+    st.session_state.pop("skill_dna_candidate_id", None)
+    st.session_state.pop("export_skill_dna_id", None)
+    _clear_session_prefixes(_DOWNSTREAM_CONFIRMATION_PREFIXES)
+
+
+def _invalidate_current_journey(*, clear_prepared: bool) -> None:
+    for key in _CURRENT_JOURNEY_KEYS:
+        st.session_state.pop(key, None)
+    for key in (
+        "extraction_result",
+        "extraction_provider_kind",
+        "actual_api_usage",
+        "review_candidate_id",
+        "duplicate_pair",
+        "merge_primary_candidate",
+    ):
+        st.session_state.pop(key, None)
+    _invalidate_current_approval()
+    if clear_prepared:
+        for key in (
+            "prepared_payload",
+            "prepared_selection",
+            "payload_confirmed",
+            "cost_confirmed",
+        ):
+            st.session_state.pop(key, None)
+
+
+def _record_current_extraction(
+    repository: ExtractionRepository,
+    *,
+    run_id: str,
+    prepared: PreparedPayload,
+    provider_kind: str,
+    model: str,
+    prompt_version: str,
+) -> None:
+    candidate_ids = [
+        item.id
+        for item in repository.list_candidates()
+        if item.extraction_run_id == run_id
+    ]
+    st.session_state.update(
+        {
+            "current_journey_source": GuidedJourneySource.EXTRACTION.value,
+            "current_run_id": run_id,
+            "current_candidate_ids": candidate_ids,
+            "current_payload_fingerprint": prepared_payload_fingerprint(prepared),
+            "current_provider_kind": provider_kind,
+            "current_provider_model": model,
+            "current_prompt_version": prompt_version,
+        }
+    )
+    _invalidate_current_approval()
+
+
+def _record_history_resume(candidate_id: str, extraction_run_id: str) -> None:
+    _invalidate_current_journey(clear_prepared=False)
+    st.session_state.update(
+        {
+            "current_journey_source": GuidedJourneySource.HISTORY.value,
+            "current_run_id": extraction_run_id,
+            "current_candidate_ids": [candidate_id],
+            "history_resume_candidate_id": candidate_id,
+        }
+    )
+    _set_guided_view(GuidedView.REVIEW)
+
+
+def _current_journey_candidates(
+    repository: ExtractionRepository,
+) -> list[SavedCandidate]:
+    raw_ids = st.session_state.get("current_candidate_ids", [])
+    if not isinstance(raw_ids, list) or not raw_ids:
+        return []
+    candidate_ids = [value for value in raw_ids if isinstance(value, str)]
+    if len(candidate_ids) != len(raw_ids):
+        return []
+    candidates_by_id = {
+        item.id: item
+        for item in repository.list_candidates()
+        if item.id in candidate_ids
+    }
+    if set(candidates_by_id) != set(candidate_ids):
+        return []
+    candidates = [candidates_by_id[candidate_id] for candidate_id in candidate_ids]
+    run_id = st.session_state.get("current_run_id")
+    if not run_id or any(item.extraction_run_id != run_id for item in candidates):
+        return []
+    source = st.session_state.get("current_journey_source")
+    if source == GuidedJourneySource.HISTORY.value:
+        resumed_id = st.session_state.get("history_resume_candidate_id")
+        return candidates if candidate_ids == [resumed_id] else []
+    if source != GuidedJourneySource.EXTRACTION.value:
+        return []
+    prepared = st.session_state.get("prepared_payload")
+    if not isinstance(prepared, PreparedPayload):
+        return []
+    if st.session_state.get("current_payload_fingerprint") != prepared_payload_fingerprint(
+        prepared
+    ):
+        return []
+    if (
+        st.session_state.get("current_provider_kind")
+        != st.session_state.get("extraction_provider_kind")
+        or not st.session_state.get("current_provider_model")
+        or not st.session_state.get("current_prompt_version")
+    ):
+        return []
+    return candidates
+
+
+def _sync_runtime_extraction_config(
+    model: str,
+    reasoning_effort: str,
+    max_output_tokens: int,
+) -> None:
+    signature = (model, reasoning_effort, max_output_tokens)
+    previous = st.session_state.get("guided_runtime_extraction_config")
+    if previous is not None and previous != signature:
+        _invalidate_current_journey(clear_prepared=False)
+        st.session_state.pop("payload_confirmed", None)
+        st.session_state.pop("cost_confirmed", None)
+    st.session_state["guided_runtime_extraction_config"] = signature
 
 
 def _bundled_sample_vault() -> Path | None:
@@ -282,6 +518,7 @@ def _render_extraction_preview(
     selected_paths: list[str],
     max_input_chars: int,
     extraction_service: ExtractionService,
+    candidate_repository: ExtractionRepository,
     openai_api_key: SecretStr | None,
     openai_model: str,
     reasoning_effort: str,
@@ -293,12 +530,7 @@ def _render_extraction_preview(
 
     selection_signature = tuple(selected_paths)
     if st.session_state.get("prepared_selection") != selection_signature:
-        st.session_state.pop("prepared_payload", None)
-        st.session_state.pop("extraction_result", None)
-        st.session_state.pop("extraction_provider_kind", None)
-        st.session_state.pop("payload_confirmed", None)
-        st.session_state.pop("cost_confirmed", None)
-        st.session_state.pop("actual_api_usage", None)
+        _invalidate_current_journey(clear_prepared=True)
 
     if not selected_paths:
         st.info(_t("payload.select_note"))
@@ -314,16 +546,14 @@ def _render_extraction_preview(
                 document_ids_by_path=document_ids_by_path,
             )
         except (MarkdownParseError, PayloadLimitError, ValueError) as exc:
-            st.session_state.pop("prepared_payload", None)
+            _invalidate_current_journey(clear_prepared=True)
             st.error(str(exc))
         else:
+            _invalidate_current_journey(clear_prepared=False)
             st.session_state["prepared_payload"] = prepared
             st.session_state["prepared_selection"] = selection_signature
-            st.session_state.pop("extraction_result", None)
-            st.session_state.pop("extraction_provider_kind", None)
             st.session_state.pop("payload_confirmed", None)
             st.session_state.pop("cost_confirmed", None)
-            st.session_state.pop("actual_api_usage", None)
 
     prepared: PreparedPayload | None = st.session_state.get("prepared_payload")
     if prepared is None:
@@ -401,9 +631,9 @@ def _render_extraction_preview(
         key="payload_confirmed",
     )
     if st.button(_t("extract.mock"), disabled=not confirmed):
-        st.session_state.pop("actual_api_usage", None)
+        _invalidate_current_journey(clear_prepared=False)
         try:
-            result = extraction_service.run(
+            run_id, result = extraction_service.run_with_id(
                 payload=prepared.payload,
                 provider=StaticMockExtractionProvider(
                     build_demo_extraction_result(
@@ -415,14 +645,20 @@ def _render_extraction_preview(
                 prompt_version="static-mock-v1",
             )
         except ExtractionProviderError as exc:
-            st.session_state.pop("extraction_result", None)
-            st.session_state.pop("extraction_provider_kind", None)
             st.error(exc.user_message)
             if exc.retryable:
                 st.caption(_t("extract.retry_mock"))
         else:
             st.session_state["extraction_result"] = result
             st.session_state["extraction_provider_kind"] = "mock"
+            _record_current_extraction(
+                candidate_repository,
+                run_id=run_id,
+                prepared=prepared,
+                provider_kind="mock",
+                model="mock-local",
+                prompt_version="static-mock-v1",
+            )
 
     if openai_api_key is None:
         st.warning(_t("extract.api_missing"))
@@ -442,6 +678,7 @@ def _render_extraction_preview(
     ):
         assert openai_api_key is not None
         st.session_state["reset_live_confirmation"] = True
+        _invalidate_current_journey(clear_prepared=False)
         provider = OpenAIExtractionProvider.from_api_key(
             api_key=openai_api_key,
             model=openai_model,
@@ -450,21 +687,27 @@ def _render_extraction_preview(
         )
         try:
             with st.spinner(_t("extract.spinner")):
-                result = extraction_service.run(
+                run_id, result = extraction_service.run_with_id(
                     payload=prepared.payload,
                     provider=provider,
                     model=openai_model,
                     prompt_version=PROMPT_VERSION,
                 )
         except ExtractionProviderError as exc:
-            st.session_state.pop("extraction_result", None)
-            st.session_state.pop("extraction_provider_kind", None)
             st.error(exc.user_message)
             if exc.retryable:
                 st.caption(_t("extract.retry_live"))
         else:
             st.session_state["extraction_result"] = result
             st.session_state["extraction_provider_kind"] = "openai"
+            _record_current_extraction(
+                candidate_repository,
+                run_id=run_id,
+                prepared=prepared,
+                provider_kind="openai",
+                model=openai_model,
+                prompt_version=PROMPT_VERSION,
+            )
             if provider.last_usage is not None:
                 actual_cost = calculate_actual_token_cost(
                     model=openai_model,
@@ -507,11 +750,14 @@ def _render_extraction_preview(
 def _render_vault_browser(
     repository: VaultRepository,
     extraction_service: ExtractionService,
+    candidate_repository: ExtractionRepository,
     max_input_chars: int,
     openai_api_key: SecretStr | None,
     openai_model: str,
     reasoning_effort: str,
     max_output_tokens: int,
+    *,
+    show_payload: bool = True,
 ) -> None:
     st.subheader(_t("vault.title"))
     st.caption(_t("vault.caption"))
@@ -551,17 +797,15 @@ def _render_vault_browser(
         try:
             files = scan_vault(Path(vault_path.strip()), exclude_paths=excluded_paths)
             vault_id = repository.save_scan(Path(vault_path.strip()), excluded_paths, files)
+            _invalidate_current_journey(clear_prepared=True)
             st.session_state["vault_id"] = vault_id
             st.session_state["vault_files"] = files
             st.session_state.pop("vault_error", None)
             for key in (
                 "selected_note_paths",
-                "prepared_payload",
-                "prepared_selection",
-                "extraction_result",
-                "extraction_provider_kind",
-                "payload_confirmed",
-                "cost_confirmed",
+                "selected_note_paths_widget",
+                "vault_folder_filter",
+                "vault_note_preview",
             ):
                 st.session_state.pop(key, None)
         except VaultScanError as exc:
@@ -581,6 +825,7 @@ def _render_vault_browser(
     selected_folder = st.selectbox(
         _t("vault.folder_filter"),
         options=[all_folders, *folders],
+        key="vault_folder_filter",
     )
     search_text = st.text_input(_t("vault.search")).strip().casefold()
     filtered = [
@@ -610,11 +855,21 @@ def _render_vault_browser(
         st.warning(_t("vault.no_matches"))
         return
 
+    selectable_paths = [item.relative_path for item in filtered]
+    if "selected_note_paths_widget" not in st.session_state:
+        st.session_state["selected_note_paths_widget"] = [
+            path
+            for path in st.session_state.get("selected_note_paths", [])
+            if path in selectable_paths
+        ]
     selected_paths = st.multiselect(
         _t("vault.analysis_selection"),
-        options=[item.relative_path for item in filtered],
-        key="selected_note_paths",
+        options=selectable_paths,
+        key="selected_note_paths_widget",
     )
+    if list(selected_paths) != st.session_state.get("selected_note_paths", []):
+        _invalidate_current_journey(clear_prepared=True)
+    st.session_state["selected_note_paths"] = list(selected_paths)
     vault_id = st.session_state.get("vault_id")
     try:
         document_ids_by_path = (
@@ -629,6 +884,7 @@ def _render_vault_browser(
     selected_path = st.selectbox(
         _t("vault.preview"),
         options=[item.relative_path for item in filtered],
+        key="vault_note_preview",
     )
     selected = next(item for item in filtered if item.relative_path == selected_path)
     try:
@@ -641,12 +897,49 @@ def _render_vault_browser(
         with st.expander("Frontmatter"):
             st.json(parsed.frontmatter)
     st.code(parsed.body, language="markdown", wrap_lines=True)
-    st.divider()
+    if show_payload:
+        st.divider()
+        _render_extraction_preview(
+            files,
+            selected_paths,
+            max_input_chars,
+            extraction_service,
+            candidate_repository,
+            openai_api_key,
+            openai_model,
+            reasoning_effort,
+            max_output_tokens,
+            document_ids_by_path,
+        )
+
+
+def _render_current_payload(
+    repository: VaultRepository,
+    extraction_service: ExtractionService,
+    candidate_repository: ExtractionRepository,
+    max_input_chars: int,
+    openai_api_key: SecretStr | None,
+    openai_model: str,
+    reasoning_effort: str,
+    max_output_tokens: int,
+) -> None:
+    files: list[VaultFile] = st.session_state.get("vault_files", [])
+    selected_paths: list[str] = st.session_state.get("selected_note_paths", [])
+    vault_id = st.session_state.get("vault_id")
+    if not note_selection_is_current(files, selected_paths, vault_id):
+        st.warning(_t("guided.block.notes"))
+        return
+    try:
+        document_ids_by_path = repository.document_ids_for_paths(vault_id, selected_paths)
+    except ValueError as exc:
+        st.error(str(exc))
+        return
     _render_extraction_preview(
         files,
         selected_paths,
         max_input_chars,
         extraction_service,
+        candidate_repository,
         openai_api_key,
         openai_model,
         reasoning_effort,
@@ -802,6 +1095,8 @@ def _render_instruction_trace_review(repository: ExtractionRepository, saved) ->
         except (ValidationError, ValueError) as exc:
             st.error(_t("trace.save_failed", error=exc))
         else:
+            if saved.id in st.session_state.get("current_candidate_ids", []):
+                _invalidate_current_approval()
             st.success(_t("trace.saved"))
             st.rerun()
     errors = trace_gate_errors(candidate, traces)
@@ -815,7 +1110,10 @@ def _render_instruction_trace_review(repository: ExtractionRepository, saved) ->
     return errors
 
 
-def _render_candidate_review(repository: ExtractionRepository) -> None:
+def _render_candidate_review(
+    repository: ExtractionRepository,
+    allowed_candidate_ids: set[str],
+) -> None:
     st.divider()
     st.subheader(_t("candidate.title"))
     st.caption(_t("candidate.caption"))
@@ -830,7 +1128,11 @@ def _render_candidate_review(repository: ExtractionRepository) -> None:
     selected_status_label = st.selectbox(
         _t("candidate.filter"), list(status_labels), key="candidate_status_filter"
     )
-    candidates = repository.list_candidates(status=status_labels[selected_status_label])
+    candidates = [
+        item
+        for item in repository.list_candidates(status=status_labels[selected_status_label])
+        if item.id in allowed_candidate_ids
+    ]
     if not candidates:
         st.info(_t("candidate.none"))
         return
@@ -841,9 +1143,12 @@ def _render_candidate_review(repository: ExtractionRepository) -> None:
         CandidateStatus.ON_HOLD: _t("status.hold"),
         CandidateStatus.REJECTED: _t("status.rejected"),
     }
+    selectable_ids = [item.id for item in candidates]
+    if st.session_state.get("review_candidate_id") not in selectable_ids:
+        st.session_state.pop("review_candidate_id", None)
     selected_id = st.selectbox(
         _t("candidate.select"),
-        [item.id for item in candidates],
+        selectable_ids,
         format_func=lambda candidate_id: next(
             (
                 f"{item.candidate.name} [{status_text[item.status]}]"
@@ -917,6 +1222,7 @@ def _render_candidate_review(repository: ExtractionRepository) -> None:
         except (ValidationError, ValueError) as exc:
             st.error(_t("candidate.edit_failed", error=exc))
         else:
+            _invalidate_current_approval()
             st.success(_t("candidate.edited"))
             st.rerun()
 
@@ -939,17 +1245,25 @@ def _render_candidate_review(repository: ExtractionRepository) -> None:
             disabled=status is CandidateStatus.APPROVED and bool(trace_errors),
         ):
             repository.set_candidate_status(saved.id, status)
+            if status is CandidateStatus.APPROVED:
+                st.session_state["current_approved_candidate_id"] = saved.id
+            elif st.session_state.get("current_approved_candidate_id") == saved.id:
+                _invalidate_current_approval()
             st.rerun()
 
 
-def _render_duplicate_review(repository: ExtractionRepository) -> None:
+def _render_duplicate_review(
+    repository: ExtractionRepository,
+    allowed_candidate_ids: set[str],
+) -> None:
     st.divider()
     st.subheader(_t("duplicate.title"))
     st.caption(_t("duplicate.caption"))
     active_candidates = [
         item
         for item in repository.list_candidates()
-        if item.status in {CandidateStatus.PENDING, CandidateStatus.APPROVED}
+        if item.id in allowed_candidate_ids
+        and item.status in {CandidateStatus.PENDING, CandidateStatus.APPROVED}
     ]
     pairs = find_duplicate_candidates([(item.id, item.candidate) for item in active_candidates])
     if not pairs:
@@ -1021,10 +1335,22 @@ def _render_duplicate_review(repository: ExtractionRepository) -> None:
         key=f"merge_candidates_{selected_pair_key}",
     ):
         try:
-            repository.create_merged_candidate(primary_id, secondary_id, merged)
+            saved_merge = repository.create_merged_candidate(
+                primary_id,
+                secondary_id,
+                merged,
+            )
         except ValueError as exc:
             st.error(_t("duplicate.failed", error=exc))
         else:
+            current_ids = [
+                candidate_id
+                for candidate_id in st.session_state.get("current_candidate_ids", [])
+                if candidate_id not in {primary_id, secondary_id}
+            ]
+            current_ids.append(saved_merge.id)
+            st.session_state["current_candidate_ids"] = current_ids
+            _invalidate_current_approval()
             st.success(_t("duplicate.saved"))
             st.rerun()
 
@@ -1032,6 +1358,7 @@ def _render_duplicate_review(repository: ExtractionRepository) -> None:
 def _render_skill_dna(
     candidate_repository: ExtractionRepository,
     skill_repository: SkillDNARepository,
+    allowed_candidate_ids: set[str],
 ) -> None:
     st.divider()
     st.subheader(_t("skill_dna.title"))
@@ -1040,7 +1367,8 @@ def _render_skill_dna(
     approved = [
         item
         for item in approved_candidates
-        if not trace_gate_errors(item.candidate, item.instruction_traces)
+        if item.id in allowed_candidate_ids
+        and not trace_gate_errors(item.candidate, item.instruction_traces)
     ]
     blocked_count = len(approved_candidates) - len(approved)
     if blocked_count:
@@ -1114,11 +1442,16 @@ def _render_skill_dna(
 def _render_skill_export(
     skill_repository: SkillDNARepository,
     export_repository: ExportRepository,
+    allowed_candidate_id: str,
 ) -> None:
     st.divider()
     st.subheader(_t("export.title"))
     st.caption(_t("export.caption"))
-    stored_skills = skill_repository.list_all()
+    stored_skills = [
+        skill
+        for skill in skill_repository.list_all()
+        if skill.candidate_id == allowed_candidate_id
+    ]
     skills = []
     blocked_count = 0
     for stored_skill in stored_skills:
@@ -1429,6 +1762,306 @@ def _render_api_key_settings(settings, api_key: SecretStr | None, error: str | N
         st.success(_t(notice_key))
 
 
+def _set_guided_view(view: GuidedView) -> None:
+    st.session_state["guided_view"] = view.value
+
+
+def _set_ui_language(language: Language) -> None:
+    st.session_state["ui_language"] = language
+
+
+def _guided_eligibility(
+    candidate_repository: ExtractionRepository,
+) -> GuidedEligibility:
+    files: list[VaultFile] = st.session_state.get("vault_files", [])
+    durable_selected_paths: list[str] = st.session_state.get("selected_note_paths", [])
+    selected_paths: list[str] = st.session_state.get(
+        "selected_note_paths_widget",
+        durable_selected_paths,
+    )
+    if selected_paths != durable_selected_paths:
+        _invalidate_current_journey(clear_prepared=True)
+    notes_selected = note_selection_is_current(
+        files,
+        selected_paths,
+        st.session_state.get("vault_id"),
+    )
+    had_current_marker = bool(st.session_state.get("current_candidate_ids"))
+    candidates = _current_journey_candidates(candidate_repository)
+    if had_current_marker and not candidates:
+        _invalidate_current_journey(clear_prepared=False)
+        st.session_state.pop("payload_confirmed", None)
+        st.session_state.pop("cost_confirmed", None)
+    approved_id = st.session_state.get("current_approved_candidate_id")
+    approved = any(
+        item.id == approved_id
+        and item.status is CandidateStatus.APPROVED
+        and not trace_gate_errors(item.candidate, item.instruction_traces)
+        for item in candidates
+    )
+    return GuidedEligibility(
+        notes_selected=notes_selected,
+        draft_available=bool(candidates),
+        approved_candidate=approved,
+    )
+
+
+def _render_guided_navigation(
+    current: GuidedView,
+    eligibility: GuidedEligibility,
+) -> None:
+    views = (
+        GuidedView.HOME,
+        GuidedView.NOTES,
+        GuidedView.DATA,
+        GuidedView.REVIEW,
+        GuidedView.SAVE,
+        GuidedView.SETTINGS,
+    )
+    labels = {
+        GuidedView.HOME: _t("guided.nav.home"),
+        GuidedView.NOTES: _t("guided.nav.notes"),
+        GuidedView.DATA: _t("guided.nav.data"),
+        GuidedView.REVIEW: _t("guided.nav.review"),
+        GuidedView.SAVE: _t("guided.nav.save"),
+        GuidedView.SETTINGS: _t("guided.nav.settings"),
+    }
+    for column, view in zip(st.columns(len(views)), views, strict=True):
+        column.button(
+            labels[view],
+            key=f"guided_nav_{view.value}",
+            type="primary" if view is current else "secondary",
+            disabled=not guided_view_is_eligible(view, eligibility),
+            width="stretch",
+            on_click=_set_guided_view,
+            args=(view,),
+        )
+
+
+def _start_guided_flow(kind: str, sample_vault: Path | None) -> None:
+    st.session_state["guided_start_kind"] = kind
+    if kind == "sample" and sample_vault is not None:
+        st.session_state["vault_path_input"] = str(sample_vault)
+        st.session_state["sample_vault_notice"] = True
+    _set_guided_view(GuidedView.NOTES)
+
+
+def _render_guided_home() -> None:
+    st.caption(_t("guided.home.eyebrow"))
+    st.title(_t("guided.home.title"))
+    st.markdown(_t("guided.home.body"))
+    sample_vault = _bundled_sample_vault()
+    selected = st.session_state.get("guided_start_kind")
+    columns = st.columns(2)
+    columns[0].button(
+        _t("guided.home.sample"),
+        key="guided_start_sample",
+        type="primary" if selected == "sample" else "secondary",
+        disabled=sample_vault is None,
+        width="stretch",
+        on_click=_start_guided_flow,
+        args=("sample", sample_vault),
+    )
+    columns[1].button(
+        _t("guided.home.own"),
+        key="guided_start_own",
+        type="primary" if selected == "own" else "secondary",
+        width="stretch",
+        on_click=_start_guided_flow,
+        args=("own", sample_vault),
+    )
+    example_columns = st.columns(2)
+    with example_columns[0]:
+        with st.container(border=True):
+            st.markdown(f"### {_t('guided.home.input')}")
+            st.write(_t("guided.home.input_example"))
+    with example_columns[1]:
+        with st.container(border=True):
+            st.markdown(f"### {_t('guided.home.output')}")
+            st.write(_t("guided.home.output_example"))
+    with st.container(border=True):
+        st.markdown(f"### {_t('guided.home.benefit')}")
+        st.write(_t("guided.home.benefit_text"))
+    with st.expander(_t("guided.home.example_title"), expanded=False):
+        st.markdown(_t("guided.home.example_body"))
+    st.iframe(
+        build_guided_walkthrough_data_uri(_language()),
+        height=720,
+    )
+
+
+def _render_step_intro(title_key: str, body_key: str) -> None:
+    st.title(_t(title_key))
+    st.markdown(_t(body_key))
+
+
+def _render_step_continue(
+    next_view: GuidedView,
+    eligibility: GuidedEligibility,
+    *,
+    label_key: str,
+    blocker_key: str,
+) -> None:
+    if not guided_view_is_eligible(next_view, eligibility):
+        st.warning(_t(blocker_key))
+    st.button(
+        _t(label_key),
+        key=f"guided_continue_{next_view.value}",
+        type="primary",
+        disabled=not guided_view_is_eligible(next_view, eligibility),
+        on_click=_set_guided_view,
+        args=(next_view,),
+    )
+
+
+def _render_history_resume(
+    candidate_repository: ExtractionRepository,
+    skill_repository: SkillDNARepository,
+) -> None:
+    st.subheader(_t("guided.history.title"))
+    st.caption(_t("guided.history.body"))
+    candidates = candidate_repository.list_candidates()
+    if candidates:
+        candidates_by_id = {item.id: item for item in candidates}
+        selected_candidate_id = st.selectbox(
+            _t("guided.history.candidate"),
+            [None, *candidates_by_id],
+            format_func=lambda candidate_id: (
+                _t("guided.history.choose_candidate")
+                if candidate_id is None
+                else (
+                    f"{candidates_by_id[candidate_id].candidate.name} "
+                    f"[{candidates_by_id[candidate_id].status.value}]"
+                )
+            ),
+            key="history_candidate_id",
+        )
+        if selected_candidate_id is not None:
+            selected_candidate = candidates_by_id[selected_candidate_id]
+            st.json(selected_candidate.candidate.model_dump(mode="json"))
+            if st.button(
+                _t("guided.history.resume_candidate"),
+                key=f"resume_candidate_{selected_candidate_id}",
+            ):
+                _record_history_resume(
+                    selected_candidate.id,
+                    selected_candidate.extraction_run_id,
+                )
+                if (
+                    selected_candidate.status is CandidateStatus.APPROVED
+                    and not trace_gate_errors(
+                        selected_candidate.candidate,
+                        selected_candidate.instruction_traces,
+                    )
+                ):
+                    st.session_state["current_approved_candidate_id"] = (
+                        selected_candidate.id
+                    )
+                st.rerun()
+    else:
+        st.info(_t("guided.history.none_candidates"))
+
+    skills = skill_repository.list_all()
+    if skills:
+        skills_by_id = {item.id: item for item in skills}
+        selected_skill_id = st.selectbox(
+            _t("guided.history.skill"),
+            [None, *skills_by_id],
+            format_func=lambda skill_id: (
+                _t("guided.history.choose_skill")
+                if skill_id is None
+                else f"{skills_by_id[skill_id].name} v{skills_by_id[skill_id].version}"
+            ),
+            key="history_skill_id",
+        )
+        if selected_skill_id is not None:
+            selected_skill = skills_by_id[selected_skill_id]
+            st.json(selected_skill.model_dump(mode="json"))
+            try:
+                source_candidate = candidate_repository.get_candidate(
+                    selected_skill.candidate_id
+                )
+            except ValueError:
+                source_candidate = None
+            can_resume_save = bool(
+                source_candidate is not None
+                and source_candidate.status is CandidateStatus.APPROVED
+                and not trace_gate_errors(
+                    source_candidate.candidate,
+                    source_candidate.instruction_traces,
+                )
+            )
+            if not can_resume_save:
+                st.warning(_t("guided.history.not_approved"))
+            if st.button(
+                _t("guided.history.resume_skill"),
+                key=f"resume_skill_{selected_skill_id}",
+                disabled=not can_resume_save,
+            ):
+                assert source_candidate is not None
+                _record_history_resume(
+                    source_candidate.id,
+                    source_candidate.extraction_run_id,
+                )
+                st.session_state["current_approved_candidate_id"] = source_candidate.id
+                _set_guided_view(GuidedView.SAVE)
+                st.rerun()
+    else:
+        st.info(_t("guided.history.none_skills"))
+
+
+def _render_guided_settings(
+    settings,
+    api_key: SecretStr | None,
+    credential_error: str | None,
+    database: Database,
+    candidate_repository: ExtractionRepository,
+    skill_repository: SkillDNARepository,
+    feedback_repository: SkillFeedbackRepository,
+) -> None:
+    st.title(_t("guided.settings.title"))
+    language_tab, api_tab, data_tab, safety_tab, feedback_tab = st.tabs(
+        [
+            _t("guided.settings.language"),
+            _t("guided.settings.api"),
+            _t("guided.settings.data"),
+            _t("guided.settings.safety"),
+            _t("guided.settings.feedback"),
+        ]
+    )
+    with language_tab:
+        st.markdown(_t("guided.settings.language_help"))
+        language_columns = st.columns(2)
+        language_columns[0].button(
+            LANGUAGE_LABELS["en"],
+            key="guided_settings_language_en",
+            type="primary" if _language() == "en" else "secondary",
+            on_click=_set_ui_language,
+            args=("en",),
+            width="stretch",
+        )
+        language_columns[1].button(
+            LANGUAGE_LABELS["ja"],
+            key="guided_settings_language_ja",
+            type="primary" if _language() == "ja" else "secondary",
+            on_click=_set_ui_language,
+            args=("ja",),
+            width="stretch",
+        )
+    with api_tab:
+        _render_api_key_settings(settings, api_key, credential_error)
+    with data_tab:
+        _render_database_controls(database)
+    with safety_tab:
+        st.info(_t("guided.settings.safety_body"))
+        st.markdown(_t("local_first.body"))
+    with feedback_tab:
+        _render_history_resume(candidate_repository, skill_repository)
+        st.divider()
+        _render_first_use_feedback()
+        _render_skill_feedback(skill_repository, feedback_repository)
+
+
 def main() -> None:
     settings = get_settings()
     configure_logging(settings.log_level)
@@ -1441,14 +2074,22 @@ def main() -> None:
         page_title=settings.app_name,
         page_icon="🧬",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="collapsed",
+    )
+    _sync_runtime_extraction_config(
+        settings.openai_model,
+        settings.openai_reasoning_effort,
+        settings.openai_max_output_tokens,
     )
     inject_theme()
+    supported_languages: list[Language] = ["en", "ja"]
+    if st.session_state.get("ui_language") not in supported_languages:
+        st.session_state["ui_language"] = DEFAULT_LANGUAGE
     with st.sidebar:
         st.selectbox(
             text(DEFAULT_LANGUAGE, "language.label"),
-            options=list(LANGUAGE_LABELS),
-            index=list(LANGUAGE_LABELS).index(DEFAULT_LANGUAGE),
+            options=supported_languages,
+            index=supported_languages.index(DEFAULT_LANGUAGE),
             format_func=LANGUAGE_LABELS.get,
             key="ui_language",
         )
@@ -1458,54 +2099,98 @@ def main() -> None:
         api_key_configured=openai_api_key is not None,
         language=language,
     )
-    render_hero(__release_label__, language)
-    render_workflow(language)
-
-    st.info(_t("beta.notice"))
-
-    with st.container(border=True):
-        st.markdown(f"### {_t('quick.title')}")
-        st.markdown(_t("quick.three_steps"))
-
-    with st.expander(_t("quick.details_label"), expanded=False):
-        st.markdown(_t("quick.five_steps"))
-
-    st.subheader(_t("local_first.title"))
-    st.markdown(_t("local_first.body"))
-
-    _render_first_use_feedback()
-
-    with st.container(border=True):
-        _render_api_key_settings(settings, openai_api_key, credential_error)
-
-    st.divider()
     assert database.session_factory is not None
     extraction_repository = ExtractionRepository(database.session_factory)
     skill_repository = SkillDNARepository(database.session_factory)
     export_repository = ExportRepository(database.session_factory)
     feedback_repository = SkillFeedbackRepository(database.session_factory)
-    with st.container(border=True):
+    vault_repository = VaultRepository(database.session_factory)
+    extraction_service = ExtractionService(extraction_repository)
+
+    eligibility = _guided_eligibility(extraction_repository)
+    requested = st.session_state.get("guided_view", GuidedView.HOME.value)
+    current = resolve_guided_view(requested, eligibility)
+    if requested != current.value:
+        st.session_state["guided_view"] = current.value
+    _render_guided_navigation(current, eligibility)
+    st.divider()
+
+    if current is GuidedView.HOME:
+        _render_guided_home()
+    elif current is GuidedView.NOTES:
+        _render_step_intro("guided.step.notes.title", "guided.step.notes.body")
         _render_vault_browser(
-            VaultRepository(database.session_factory),
-            ExtractionService(extraction_repository),
+            vault_repository,
+            extraction_service,
+            extraction_repository,
+            settings.max_input_chars,
+            openai_api_key,
+            settings.openai_model,
+            settings.openai_reasoning_effort,
+            settings.openai_max_output_tokens,
+            show_payload=False,
+        )
+        _render_step_continue(
+            GuidedView.DATA,
+            _guided_eligibility(extraction_repository),
+            label_key="guided.continue.data",
+            blocker_key="guided.block.notes",
+        )
+    elif current is GuidedView.DATA:
+        _render_step_intro("guided.step.data.title", "guided.step.data.body")
+        _render_current_payload(
+            vault_repository,
+            extraction_service,
+            extraction_repository,
             settings.max_input_chars,
             openai_api_key,
             settings.openai_model,
             settings.openai_reasoning_effort,
             settings.openai_max_output_tokens,
         )
-    with st.container(border=True):
-        _render_candidate_review(extraction_repository)
-    with st.container(border=True):
-        _render_duplicate_review(extraction_repository)
-    with st.container(border=True):
-        _render_skill_dna(extraction_repository, skill_repository)
-    with st.container(border=True):
-        _render_skill_export(skill_repository, export_repository)
-    with st.container(border=True):
-        _render_skill_feedback(skill_repository, feedback_repository)
-    with st.container(border=True):
-        _render_database_controls(database)
+        _render_step_continue(
+            GuidedView.REVIEW,
+            _guided_eligibility(extraction_repository),
+            label_key="guided.continue.review",
+            blocker_key="guided.block.draft",
+        )
+    elif current is GuidedView.REVIEW:
+        _render_step_intro("guided.step.review.title", "guided.step.review.body")
+        current_candidate_ids = {
+            item.id for item in _current_journey_candidates(extraction_repository)
+        }
+        _render_candidate_review(extraction_repository, current_candidate_ids)
+        with st.expander(_t("duplicate.title"), expanded=False):
+            _render_duplicate_review(extraction_repository, current_candidate_ids)
+        _render_step_continue(
+            GuidedView.SAVE,
+            _guided_eligibility(extraction_repository),
+            label_key="guided.continue.save",
+            blocker_key="guided.block.approved",
+        )
+    elif current is GuidedView.SAVE:
+        _render_step_intro("guided.step.save.title", "guided.step.save.body")
+        approved_candidate_id = st.session_state["current_approved_candidate_id"]
+        _render_skill_dna(
+            extraction_repository,
+            skill_repository,
+            {approved_candidate_id},
+        )
+        _render_skill_export(
+            skill_repository,
+            export_repository,
+            approved_candidate_id,
+        )
+    else:
+        _render_guided_settings(
+            settings,
+            openai_api_key,
+            credential_error,
+            database,
+            extraction_repository,
+            skill_repository,
+            feedback_repository,
+        )
 
 
 if __name__ == "__main__":
