@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[0-9A-Za-z][0-9A-Za-z.-]{0,79}$')]
-    [string]$ArtifactLabel = "0.1.0-beta.5"
+    [string]$ArtifactLabel = "0.1.0-beta.6"
 )
 
 $ErrorActionPreference = "Stop"
