@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "skill-dna-compiler"
-version = "0.1.0b5"
+version = "0.1.0b6"
 description = "Compile reusable, source-backed AI skills from selected Obsidian notes."
 readme = "README.md"
 license = "MPL-2.0"
