@@ -361,6 +361,19 @@ def test_app_previews_and_explicitly_exports_skill(tmp_path, monkeypatch):
     destination.mkdir()
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "test.db"))
     app = AppTest.from_file("app.py").run(timeout=30)
+    assert next(
+        button for button in app.button if button.label == "4. Save and use"
+    ).disabled
+    next(button for button in app.button if button.label == "Settings").click()
+    app.run(timeout=30)
+    next(
+        widget
+        for widget in app.selectbox
+        if widget.label == "Saved Skill to inspect"
+    ).set_value(skill.id)
+    app.run(timeout=30)
+    next(button for button in app.button if button.label == "Resume from this Skill").click()
+    app.run(timeout=30)
 
     next(
         widget for widget in app.text_input if widget.label == "Parent destination folder"

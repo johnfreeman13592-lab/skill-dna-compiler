@@ -189,6 +189,8 @@ def test_app_prepares_first_use_report_without_saving_or_sending(
         unexpected_extraction,
     )
     app = AppTest.from_file("app.py").run(timeout=30)
+    next(button for button in app.button if button.label == "Settings").click()
+    app.run(timeout=30)
 
     assert not app.exception
     assert any(
@@ -259,6 +261,8 @@ def test_app_saves_feedback_without_running_extraction(tmp_path, monkeypatch):
     _, skill = _create_skill(database_path, tmp_path)
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     app = AppTest.from_file("app.py").run(timeout=30)
+    next(button for button in app.button if button.label == "Settings").click()
+    app.run(timeout=30)
 
     next(widget for widget in app.selectbox if widget.label == "Usage").set_value(
         SkillUsageStatus.REUSED

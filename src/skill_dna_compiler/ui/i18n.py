@@ -14,7 +14,7 @@ LANGUAGE_LABELS: dict[Language, str] = {
     "ja": "日本語",
     "zh-CN": "简体中文",
 }
-ENGLISH_FALLBACK_PREFIXES = ("first_feedback.",)
+ENGLISH_FALLBACK_PREFIXES = ("first_feedback.", "guided.")
 
 
 def _entry(en: str, ja: str, zh_cn: str) -> dict[Language, str]:
@@ -22,6 +22,210 @@ def _entry(en: str, ja: str, zh_cn: str) -> dict[Language, str]:
 
 
 TEXT: dict[str, dict[Language, str]] = {
+    "guided.nav.home": _entry("Home", "ホーム", "Home"),
+    "guided.nav.notes": _entry("1. Choose notes", "1. メモを選ぶ", "1. Choose notes"),
+    "guided.nav.data": _entry("2. Check data", "2. データを確認", "2. Check data"),
+    "guided.nav.review": _entry("3. Review draft", "3. Skill案を確認", "3. Review draft"),
+    "guided.nav.save": _entry("4. Save and use", "4. 保存して使う", "4. Save and use"),
+    "guided.nav.settings": _entry("Settings", "設定", "Settings"),
+    "guided.home.eyebrow": _entry(
+        "PUBLIC BETA · GUIDED FIRST USE",
+        "PUBLIC BETA・初回ガイド",
+        "PUBLIC BETA · GUIDED FIRST USE",
+    ),
+    "guided.home.title": _entry(
+        "Turn your notes into instructions your AI can reuse.",
+        "あなたのメモを、AIが繰り返し使える作業ルールに。",
+        "Turn your notes into instructions your AI can reuse.",
+    ),
+    "guided.home.body": _entry(
+        "Choose notes, review the exact data, compare each draft with its source, and save only what you approve.",
+        "メモを選び、使用するデータを確認し、Skill案を元メモと照らし合わせ、承認した内容だけを保存します。",
+        "Choose notes, review the exact data, compare each draft with its source, and save only what you approve.",
+    ),
+    "guided.home.sample": _entry("Try the sample", "Sampleで試す", "Try the sample"),
+    "guided.home.own": _entry("Use my notes", "自分のメモを使う", "Use my notes"),
+    "guided.home.input": _entry("Selected note", "選んだメモ", "Selected note"),
+    "guided.home.input_example": _entry(
+        "Back up important data before changing it.",
+        "重要なデータを変更する前にバックアップする。",
+        "Back up important data before changing it.",
+    ),
+    "guided.home.output": _entry("Reusable Skill", "繰り返し使えるSkill", "Reusable Skill"),
+    "guided.home.output_example": _entry(
+        "Before changing important data, create and verify a backup.",
+        "重要なデータを変更する前に、バックアップを作成して確認する。",
+        "Before changing important data, create and verify a backup.",
+    ),
+    "guided.home.benefit": _entry("What changes", "今後変わること", "What changes"),
+    "guided.home.benefit_text": _entry(
+        "You no longer need to repeat the same safety rule in every task.",
+        "毎回同じ安全ルールを説明する必要がなくなります。",
+        "You no longer need to repeat the same safety rule in every task.",
+    ),
+    "guided.home.example_title": _entry(
+        "See the complete flow",
+        "完了までの流れを見る",
+        "See the complete flow",
+    ),
+    "guided.home.example_body": _entry(
+        "1. Choose only the notes to use  \n2. Check the exact data and any possible charge  \n3. Compare the draft with the source and approve it  \n4. Save a local Skill version, then separately export `SKILL.md`",
+        "1. 使用するメモだけを選ぶ  \n2. 正確なデータと料金の可能性を確認する  \n3. Skill案を元メモと照らし合わせて承認する  \n4. ローカルのSkill版を保存し、別の確認で`SKILL.md`を出力する",
+        "1. Choose only the notes to use  \n2. Check the exact data and any possible charge  \n3. Compare the draft with the source and approve it  \n4. Save a local Skill version, then separately export `SKILL.md`",
+    ),
+    "guided.step.notes.title": _entry(
+        "Choose the notes to use",
+        "使用するメモを選ぶ",
+        "Choose the notes to use",
+    ),
+    "guided.step.notes.body": _entry(
+        "Only notes you explicitly select can continue to the next step.",
+        "明示的に選んだメモだけが次の段階へ進みます。",
+        "Only notes you explicitly select can continue to the next step.",
+    ),
+    "guided.step.data.title": _entry(
+        "Check the data before creating drafts",
+        "Skill案を作る前にデータを確認",
+        "Check the data before creating drafts",
+    ),
+    "guided.step.data.body": _entry(
+        "Review the exact JSON, hidden sensitive details, network mode, API-key state, and possible charge.",
+        "正確なJSON、隠した機密情報、通信方法、APIキーの状態、料金の可能性を確認します。",
+        "Review the exact JSON, hidden sensitive details, network mode, API-key state, and possible charge.",
+    ),
+    "guided.step.review.title": _entry(
+        "Check each draft against your notes",
+        "Skill案を元メモと照らし合わせる",
+        "Check each draft against your notes",
+    ),
+    "guided.step.review.body": _entry(
+        "Source support, meaning, impact, and safety conditions must all pass before approval.",
+        "承認前に、元メモの根拠、意味、影響、安全条件をすべて確認します。",
+        "Source support, meaning, impact, and safety conditions must all pass before approval.",
+    ),
+    "guided.step.save.title": _entry(
+        "Save the Skill, then save the file",
+        "Skillを保存してからファイルを保存",
+        "Save the Skill, then save the file",
+    ),
+    "guided.step.save.body": _entry(
+        "Saving a local Skill version and exporting `SKILL.md` are separate confirmed actions.",
+        "ローカルのSkill版の保存と`SKILL.md`の出力は、別々に確認する操作です。",
+        "Saving a local Skill version and exporting `SKILL.md` are separate confirmed actions.",
+    ),
+    "guided.continue.data": _entry(
+        "Continue to data review",
+        "データ確認へ進む",
+        "Continue to data review",
+    ),
+    "guided.continue.review": _entry(
+        "Continue to draft review",
+        "Skill案の確認へ進む",
+        "Continue to draft review",
+    ),
+    "guided.continue.save": _entry(
+        "Continue to save and use",
+        "保存して使うへ進む",
+        "Continue to save and use",
+    ),
+    "guided.block.notes": _entry(
+        "Select at least one note from the currently loaded Vault to continue.",
+        "現在読み込んでいるVaultから1件以上のメモを選んでください。",
+        "Select at least one note from the currently loaded Vault to continue.",
+    ),
+    "guided.block.draft": _entry(
+        "Create at least one draft Skill to continue.",
+        "続けるには1件以上のSkill案を作成してください。",
+        "Create at least one draft Skill to continue.",
+    ),
+    "guided.block.approved": _entry(
+        "Approve a candidate that passes all DNA Trace checks to continue.",
+        "DNA Traceの全確認を通過したSkill案を承認してください。",
+        "Approve a candidate that passes all DNA Trace checks to continue.",
+    ),
+    "guided.settings.title": _entry("Settings", "設定", "Settings"),
+    "guided.settings.language": _entry("Language", "言語", "Language"),
+    "guided.settings.language_help": _entry(
+        "English is the default. Japanese is available at any time.",
+        "英語が初期値です。いつでも日本語へ切り替えられます。",
+        "English is the default. Japanese is available at any time.",
+    ),
+    "guided.settings.api": _entry("OpenAI API", "OpenAI API", "OpenAI API"),
+    "guided.settings.data": _entry(
+        "Data and backups",
+        "データとバックアップ",
+        "Data and backups",
+    ),
+    "guided.settings.safety": _entry(
+        "Safety details",
+        "安全性の詳細",
+        "Safety details",
+    ),
+    "guided.settings.feedback": _entry(
+        "Feedback and history",
+        "フィードバックと履歴",
+        "Feedback and history",
+    ),
+    "guided.settings.safety_body": _entry(
+        "Only selected notes are used. Data sending, charges, draft approval, Skill saving, file export, and overwrite each keep a separate confirmation.",
+        "選んだメモだけを使います。データ送信、料金、Skill案の承認、Skill保存、ファイル出力、上書きは、それぞれ別に確認します。",
+        "Only selected notes are used. Data sending, charges, draft approval, Skill saving, file export, and overwrite each keep a separate confirmation.",
+    ),
+    "guided.history.title": _entry(
+        "History / resume",
+        "履歴から再開",
+        "History / resume",
+    ),
+    "guided.history.body": _entry(
+        "Past drafts and Skills never enter the current flow automatically. Select one explicitly to inspect or resume it.",
+        "過去のSkill案やSkillが現在の操作へ自動で入ることはありません。確認・再開する対象を明示的に選んでください。",
+        "Past drafts and Skills never enter the current flow automatically. Select one explicitly to inspect or resume it.",
+    ),
+    "guided.history.candidate": _entry(
+        "Past draft to inspect",
+        "確認する過去のSkill案",
+        "Past draft to inspect",
+    ),
+    "guided.history.choose_candidate": _entry(
+        "Choose a past draft",
+        "過去のSkill案を選ぶ",
+        "Choose a past draft",
+    ),
+    "guided.history.resume_candidate": _entry(
+        "Resume this draft",
+        "このSkill案から再開",
+        "Resume this draft",
+    ),
+    "guided.history.skill": _entry(
+        "Saved Skill to inspect",
+        "確認する保存済みSkill",
+        "Saved Skill to inspect",
+    ),
+    "guided.history.choose_skill": _entry(
+        "Choose a saved Skill",
+        "保存済みSkillを選ぶ",
+        "Choose a saved Skill",
+    ),
+    "guided.history.resume_skill": _entry(
+        "Resume from this Skill",
+        "このSkillから再開",
+        "Resume from this Skill",
+    ),
+    "guided.history.none_candidates": _entry(
+        "No past drafts are stored.",
+        "保存された過去のSkill案はありません。",
+        "No past drafts are stored.",
+    ),
+    "guided.history.none_skills": _entry(
+        "No saved Skills are stored.",
+        "保存済みSkillはありません。",
+        "No saved Skills are stored.",
+    ),
+    "guided.history.not_approved": _entry(
+        "This draft is not currently approved with a complete DNA Trace, so it can be reviewed but not opened at the save step.",
+        "このSkill案は現在、完全なDNA Traceを通過した承認済み状態ではありません。確認から再開できますが、保存段階を直接開くことはできません。",
+        "This draft is not currently approved with a complete DNA Trace, so it can be reviewed but not opened at the save step.",
+    ),
     "language.label": _entry(
         "Language",
         "表示言語",

@@ -18,6 +18,19 @@ def clear_settings_cache():
     get_settings.cache_clear()
 
 
+def _click(app: AppTest, label: str) -> AppTest:
+    next(button for button in app.button if button.label == label).click()
+    return app.run(timeout=30)
+
+
+def _open_notes(app: AppTest) -> AppTest:
+    return _click(app, "Use my notes")
+
+
+def _open_settings(app: AppTest) -> AppTest:
+    return _click(app, "Settings")
+
+
 def test_app_renders_phase_two_vault_controls(tmp_path, monkeypatch):
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "app.db"))
 
@@ -25,28 +38,22 @@ def test_app_renders_phase_two_vault_controls(tmp_path, monkeypatch):
 
     assert not app.exception
     assert any(
-        "sdc-product-title" in item.value and "Skill DNA" in item.value
-        for item in app.markdown
+        "Turn your notes into instructions your AI can reuse" in item.value
+        for item in app.title
     )
-    assert any(__release_label__ in item.value for item in app.markdown)
-    assert any(item.label == "Show the detailed five steps" for item in app.expander)
-    assert any("Fastest first-use path" in item.value for item in app.markdown)
+    assert any(button.label == "Try the sample" for button in app.button)
+    assert any(button.label == "Use my notes" for button in app.button)
+    assert not any(widget.label == "Vault folder" for widget in app.text_input)
+
+    _open_notes(app)
     assert any(widget.label == "Vault folder" for widget in app.text_input)
     assert any(button.label == "Load Vault" for button in app.button)
     assert not next(button for button in app.button if "Vault" in button.label).disabled
+
+    _open_settings(app)
     assert any(button.label == "Create database backup now" for button in app.button)
     assert any("OpenAI API key settings" in item.value for item in app.subheader)
-    workflow_headings = [
-        item.value
-        for item in app.subheader
-        if item.value.startswith(("1.", "3.", "4.", "5."))
-    ]
-    assert workflow_headings == [
-        "1. Select Obsidian notes",
-        "3. Review Skill candidates",
-        "4. Compile an approved candidate as Skill DNA",
-        "5. Export a Codex Skill",
-    ]
+    assert any(__release_label__ in item.value for item in app.markdown)
 
 
 def test_app_defaults_to_english_and_switches_ui_language(tmp_path, monkeypatch):
@@ -55,22 +62,30 @@ def test_app_defaults_to_english_and_switches_ui_language(tmp_path, monkeypatch)
 
     language = next(widget for widget in app.selectbox if widget.label == "Language")
     assert language.value == "en"
-    assert any("1. Select Obsidian notes" in item.value for item in app.subheader)
+    assert language.options == ["English", "日本語"]
+    assert any(
+        "Turn your notes into instructions your AI can reuse" in item.value
+        for item in app.title
+    )
 
     language.set_value("ja")
     app.run(timeout=30)
     assert not app.exception
-    assert any("1. Obsidianメモを選ぶ" in item.value for item in app.subheader)
     assert any(
-        item.label == "任意: 初回利用のフィードバックレポートを作る"
-        for item in app.expander
+        "メモを、AIが繰り返し使える作業ルールに" in item.value for item in app.title
     )
-
-    language = next(widget for widget in app.selectbox if widget.label == "Language")
-    language.set_value("zh-CN")
+    next(button for button in app.button if button.label == "設定").click()
     app.run(timeout=30)
-    assert not app.exception
-    assert any("1. 选择 Obsidian 笔记" in item.value for item in app.subheader)
+    assert [tab.label for tab in app.tabs] == [
+        "言語",
+        "OpenAI API",
+        "データとバックアップ",
+        "安全性の詳細",
+        "フィードバックと履歴",
+    ]
+    next(button for button in app.button if button.label == "English").click()
+    app.run(timeout=30)
+    assert any(item.value == "Settings" for item in app.title)
 
 
 def test_packaged_sample_vault_resolves_next_to_executable(tmp_path, monkeypatch):
@@ -94,6 +109,7 @@ def test_sample_vault_shortcut_only_fills_path_until_user_loads(
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     monkeypatch.setenv("SKILL_DNA_SAMPLE_VAULT_PATH", str(sample_vault))
     app = AppTest.from_file("app.py").run(timeout=30)
+    _open_notes(app)
 
     next(
         button for button in app.button if button.label == "Use bundled Sample Vault"
@@ -128,10 +144,14 @@ def test_app_starts_in_clean_temporary_environment_without_api_key(
 
     assert not app.exception
     assert database_path.is_file()
-    assert any("OPENAI_API_KEY" in message.value for message in app.warning)
-    assert any("No Skill candidates are available yet" in item.value for item in app.info)
-    assert any("No current Skill DNA is eligible for export" in item.value for item in app.info)
+    assert any(
+        "Turn your notes into instructions your AI can reuse" in item.value
+        for item in app.title
+    )
     assert not list(tmp_path.rglob("SKILL.md"))
+
+    _open_settings(app)
+    assert any("OPENAI_API_KEY" in message.value for message in app.warning)
 
 
 def test_production_app_saves_and_deletes_key_via_keyring(tmp_path, monkeypatch):
@@ -154,6 +174,7 @@ def test_production_app_saves_and_deletes_key_via_keyring(tmp_path, monkeypatch)
         lambda service, account: stored.pop((service, account)),
     )
     app = AppTest.from_file(str(PROJECT_ROOT / "app.py")).run(timeout=30)
+    _open_settings(app)
 
     save_button = next(
         button
@@ -205,6 +226,7 @@ def test_app_reports_missing_vault_in_clean_temporary_environment(
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "clean-app.db"))
     app = AppTest.from_file(str(PROJECT_ROOT / "app.py")).run(timeout=30)
+    _open_notes(app)
 
     missing_vault = tmp_path / "missing-vault"
     next(widget for widget in app.text_input if widget.label == "Vault folder").set_value(
@@ -223,6 +245,7 @@ def test_app_creates_validated_manual_database_backup(tmp_path, monkeypatch):
     database_path = tmp_path / "app.db"
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     app = AppTest.from_file("app.py").run(timeout=30)
+    _open_settings(app)
 
     next(
         button for button in app.button if button.label == "Create database backup now"
@@ -244,6 +267,7 @@ def test_app_lists_corrupt_backup_without_offering_it_for_restore(tmp_path, monk
     database_path = tmp_path / "app.db"
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     app = AppTest.from_file("app.py").run(timeout=30)
+    _open_settings(app)
     next(
         button for button in app.button if button.label == "Create database backup now"
     ).click()
@@ -270,6 +294,7 @@ def test_app_skips_permission_denied_backup_without_deleting_it(tmp_path, monkey
     database_path = tmp_path / "app.db"
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(database_path))
     app = AppTest.from_file("app.py").run(timeout=30)
+    _open_settings(app)
     next(
         button for button in app.button if button.label == "Create database backup now"
     ).click()
@@ -306,6 +331,7 @@ def test_app_scans_and_previews_vault(tmp_path, monkeypatch):
     (vault / "Example.md").write_text("# Rule\nReuse existing code.", encoding="utf-8")
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "app.db"))
     app = AppTest.from_file("app.py").run(timeout=30)
+    _open_notes(app)
 
     vault_input = next(widget for widget in app.text_input if widget.label == "Vault folder")
     vault_input.set_value(str(vault))
@@ -325,6 +351,7 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
     (vault / "Example.md").write_text(f"# Rule\nkey={secret}", encoding="utf-8")
     monkeypatch.setenv("SKILL_DNA_DATABASE_PATH", str(tmp_path / "app.db"))
     app = AppTest.from_file("app.py").run(timeout=30)
+    _open_notes(app)
 
     next(widget for widget in app.text_input if widget.label == "Vault folder").set_value(
         str(vault)
@@ -337,6 +364,7 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
         if widget.label == "Notes to analyze (not sent yet)"
     ).set_value(["Example.md"])
     app.run(timeout=30)
+    _click(app, "Continue to data review")
     next(button for button in app.button if button.label == "Prepare outbound content").click()
     app.run(timeout=30)
 
@@ -361,6 +389,8 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
     app.run(timeout=30)
     next(button for button in app.button if button.label == "Run mock extraction").click()
     app.run(timeout=30)
+    assert any("Mock extraction completed" in message.value for message in app.success)
+    _click(app, "Continue to draft review")
 
     with sqlite3.connect(tmp_path / "app.db") as connection:
         status = connection.execute("SELECT status FROM extraction_runs").fetchone()
@@ -386,12 +416,7 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
     assert any(
         button.label == "Save this rule review" for button in app.button
     )
-    assert any("Mock extraction completed" in message.value for message in app.success)
-    assert any("Verified Skill candidates" in item.value for item in app.markdown)
-    assert any(
-        "This candidate was not extracted by AI" in item.value
-        for item in app.warning
-    )
+    assert any("Check each draft against your notes" in item.value for item in app.title)
 
     # A candidate approved by an older app version must remain visible for re-review,
     # while downstream compilation excludes it until the current trace gate passes.
@@ -402,28 +427,24 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
 
     assert not app.exception
     assert any("approved by an older version" in item.value for item in app.warning)
-    assert any("DNA Trace is incomplete" in item.value for item in app.warning)
-    assert any("No candidate currently passes DNA Trace" in item.value for item in app.info)
+    assert next(
+        button for button in app.button if button.label == "4. Save and use"
+    ).disabled
 
     with sqlite3.connect(tmp_path / "app.db") as connection:
         connection.execute("UPDATE skill_candidates SET status = 'pending'")
         connection.commit()
     app.run(timeout=30)
 
+    _click(app, "2. Check data")
     next(button for button in app.button if button.label == "Run mock extraction").click()
     app.run(timeout=30)
-    merge_checkbox = next(
-        checkbox
-        for checkbox in app.checkbox
-        if checkbox.label
+    _click(app, "Continue to draft review")
+    assert not any(
+        checkbox.label
         == "Put both source candidates on hold and save the merge as a new Pending candidate"
+        for checkbox in app.checkbox
     )
-    merge_checkbox.set_value(True)
-    app.run(timeout=30)
-    next(
-        button for button in app.button if button.label == "Merge as a Pending candidate"
-    ).click()
-    app.run(timeout=30)
 
     with sqlite3.connect(tmp_path / "app.db") as connection:
         candidate_statuses = connection.execute(
@@ -433,6 +454,6 @@ def test_app_prepares_redacted_payload_without_network(tmp_path, monkeypatch):
             "SELECT COUNT(*) FROM candidate_merge_sources"
         ).fetchone()
         generated_skills = connection.execute("SELECT COUNT(*) FROM skill_dna").fetchone()
-    assert candidate_statuses == [("on_hold",), ("on_hold",), ("pending",)]
-    assert merge_sources == (2,)
+    assert candidate_statuses == [("pending",), ("pending",)]
+    assert merge_sources == (0,)
     assert generated_skills == (0,)
