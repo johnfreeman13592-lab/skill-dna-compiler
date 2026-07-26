@@ -48,8 +48,8 @@ def test_packaged_root_readme_source_is_the_english_quick_start() -> None:
 
 
 def test_public_readmes_use_current_beta_download() -> None:
-    expected_version = "v0.1.0-beta.5"
-    expected_asset = "skill-dna-compiler-0.1.0-beta.5-windows-x64.zip"
+    expected_version = "v0.1.0-beta.6"
+    expected_asset = "skill-dna-compiler-0.1.0-beta.6-windows-x64.zip"
 
     for relative in ("README.md", "README.ja.md", "README.zh-CN.md"):
         readme = _read(relative)

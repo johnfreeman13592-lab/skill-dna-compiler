@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.5"><img alt="Release" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.6"><img alt="Release" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-059669">
@@ -29,7 +29,7 @@
 ## Download for Windows
 
 > [!IMPORTANT]
-> **[Download Skill DNA Compiler v0.1.0-beta.5 for Windows](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.5/skill-dna-compiler-0.1.0-beta.5-windows-x64.zip)**
+> **[Download Skill DNA Compiler v0.1.0-beta.6 for Windows](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.6/skill-dna-compiler-0.1.0-beta.6-windows-x64.zip)**
 
 1. Right-click the downloaded ZIP and select **Extract All**.
 2. Open the extracted folder. Do not run the app from inside the ZIP.
@@ -151,8 +151,8 @@ Issues, logs, or generated Skills.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
-  .\dist\skill-dna-compiler-0.1.0-beta.5-windows-x64.zip `
-  --report-dir .\build\verification\beta.5
+  .\dist\skill-dna-compiler-0.1.0-beta.6-windows-x64.zip `
+  --report-dir .\build\verification\beta.6
 ```
 
 The verifier checks the checksum, archive limits and safe paths, required and forbidden files,

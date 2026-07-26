@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.5"><img alt="リリース" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
+  <a href="https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/tag/v0.1.0-beta.6"><img alt="リリース" src="https://img.shields.io/github/v/release/johnfreeman13592-lab/skill-dna-compiler?include_prereleases&label=beta&color=7c3aed"></a>
   <img alt="対応OS" src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4">
   <a href="LICENSE"><img alt="ライセンス" src="https://img.shields.io/badge/license-MPL--2.0-2563eb"></a>
   <img alt="ローカルファースト" src="https://img.shields.io/badge/data-local--first-059669">
@@ -30,7 +30,7 @@
 ## Windows版をダウンロード
 
 > [!IMPORTANT]
-> **[Skill DNA Compiler v0.1.0-beta.5 Windows版をダウンロード](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.5/skill-dna-compiler-0.1.0-beta.5-windows-x64.zip)**
+> **[Skill DNA Compiler v0.1.0-beta.6 Windows版をダウンロード](https://github.com/johnfreeman13592-lab/skill-dna-compiler/releases/download/v0.1.0-beta.6/skill-dna-compiler-0.1.0-beta.6-windows-x64.zip)**
 
 1. ダウンロードしたZIPを右クリックし、**「すべて展開」**を選ぶ。
 2. 展開後のフォルダを開く。ZIPの中から直接起動しない。
@@ -150,8 +150,8 @@ py -3.11 -m venv .venv
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_beta.ps1
 
 .\.venv\Scripts\python.exe .\tools\verify_windows_candidate.py `
-  .\dist\skill-dna-compiler-0.1.0-beta.5-windows-x64.zip `
-  --report-dir .\build\verification\beta.5
+  .\dist\skill-dna-compiler-0.1.0-beta.6-windows-x64.zip `
+  --report-dir .\build\verification\beta.6
 ```
 
 検証ツールはchecksum、ZIP制限と安全なパス、必須・禁止ファイル、依存関係とライセンス、
